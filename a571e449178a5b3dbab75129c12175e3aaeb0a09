@@ -1,0 +1,8 @@
+Code-Review+2: Matt Riedemann <mriedem@us.ibm.com>
+Workflow+1: Matt Riedemann <mriedem@us.ibm.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 30 Mar 2016 20:05:10 +0000
+Reviewed-on: https://review.openstack.org/299287
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/stable/liberty

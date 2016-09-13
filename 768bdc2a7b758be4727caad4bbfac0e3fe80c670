@@ -1,0 +1,9 @@
+Code-Review+1: Craig Vyvial <cp16net@gmail.com>
+Code-Review+2: Doug Hellmann <doug@doughellmann.com>
+Workflow+1: Doug Hellmann <doug@doughellmann.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 20 Oct 2015 19:20:45 +0000
+Reviewed-on: https://review.openstack.org/235149
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/stable/liberty
