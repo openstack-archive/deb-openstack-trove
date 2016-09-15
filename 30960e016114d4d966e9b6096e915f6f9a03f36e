@@ -1,0 +1,8 @@
+Code-Review+2: Peter Stachowski <peter@tesora.com>
+Workflow+1: Peter Stachowski <peter@tesora.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Thu, 15 Sep 2016 06:05:05 +0000
+Reviewed-on: https://review.openstack.org/370397
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
