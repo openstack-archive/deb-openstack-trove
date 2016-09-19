@@ -21,6 +21,7 @@ import json
 import re
 import six
 from six.moves.configparser import SafeConfigParser
+import xmltodict
 import yaml
 
 
@@ -179,8 +180,8 @@ class IniCodec(StreamCodec):
     ...
 
     The above file content would be represented as:
-    {'section_1': {'key': 'value', 'key': 'value', ...},
-     'section_2': {'key': 'value', 'key': 'value', ...}
+    {'section_1': {'key': value, 'key': value, ...},
+     'section_2': {'key': value, 'key': value, ...}
      ...
     }
     """
@@ -190,9 +191,8 @@ class IniCodec(StreamCodec):
         :param default_value:  Default value for keys with no value.
                                If set, all keys are written as 'key = value'.
                                The key is written without trailing '=' if None.
-        :type default_value:   string
+        :type default_value:   object
         """
-        self._value_converter = StringConverter({default_value: None})
         self._default_value = default_value
         self._comment_markers = comment_markers
 
@@ -207,7 +207,8 @@ class IniCodec(StreamCodec):
         parser = self._init_config_parser()
         parser.readfp(self._pre_parse(stream))
 
-        return {s: {k: self._value_converter.to_strings(v)
+        return {s: {k:
+                    StringConverter({None: self._default_value}).to_objects(v)
                     for k, v in parser.items(s, raw=True)}
                 for s in parser.sections()}
 
@@ -231,8 +232,11 @@ class IniCodec(StreamCodec):
             for section in sections:
                 parser.add_section(section)
                 for key, value in sections[section].items():
+                    str_val = StringConverter(
+                        {self._default_value: None}).to_strings(value)
                     parser.set(section, key,
-                               self._value_converter.to_strings(value))
+                               str(str_val) if str_val is not None
+                               else str_val)
 
         return parser
 
@@ -383,6 +387,7 @@ class KeyValueCodec(PropertiesCodec):
      ...
     }
     """
+
     def __init__(self, delimiter='=', comment_markers=('#'),
                  unpack_singletons=True, string_mappings=None):
         super(KeyValueCodec, self).__init__(
@@ -423,3 +428,16 @@ class Base64Codec(StreamCodec):
 
         # py27 & py34 seem to understand bytearray the same
         return bytearray([item for item in base64.b64decode(stream)])
+
+
+class XmlCodec(StreamCodec):
+
+    def __init__(self, encoding='utf-8'):
+        self._encoding = encoding
+
+    def serialize(self, dict_data):
+        return xmltodict.unparse(
+            dict_data, output=None, encoding=self._encoding, pretty=True)
+
+    def deserialize(self, stream):
+        return xmltodict.parse(stream, encoding=self._encoding)

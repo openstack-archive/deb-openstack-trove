@@ -61,7 +61,7 @@ server_delete_time_out=480
 # Nova server boot options
 # sets the --config-drive argument when doing a nova boot
 # (controls how file injection is handled by nova)
-use_nova_server_config_drive = False
+use_nova_server_config_drive = True
 
 # Configuration options for talking to nova via the novaclient.
 # These options are for an admin user in your keystone config.
@@ -216,6 +216,8 @@ rabbit_password=f7999d1955c5014aa32c
 #rabbit_virtual_host=/
 
 [mysql]
+# Whether to permit ICMP. default is False.
+icmp = True
 # Format (single port or port range): A, B-C
 # where C greater than B
 tcp_ports = 3306
