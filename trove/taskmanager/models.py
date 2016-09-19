@@ -318,6 +318,24 @@ class ClusterTasks(Cluster):
 
 class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
 
+    def _delete_resources(self, deleted_at):
+        LOG.debug("Begin _delete_resources for instance %s" % self.id)
+
+        # If volume has "available" status, delete it manually.
+        try:
+            if self.volume_id:
+                volume_client = create_cinder_client(self.context)
+                volume = volume_client.volumes.get(self.volume_id)
+                if volume.status == "available":
+                    LOG.info(_("Deleting volume %(v)s for instance: %(i)s.")
+                             % {'v': self.volume_id, 'i': self.id})
+                    volume.delete()
+        except Exception:
+            LOG.exception(_("Error deleting volume of instance %(id)s.") %
+                          {'id': self.db_info.id})
+
+        LOG.debug("End _delete_resource for instance %s" % self.id)
+
     def _get_injected_files(self, datastore_manager):
         injected_config_location = CONF.get('injected_config_location')
         guest_info = CONF.get('guest_info')
@@ -348,6 +366,8 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
         # Make sure the service becomes active before sending a usage
         # record to avoid over billing a customer for an instance that
         # fails to build properly.
+        error_message = ''
+        error_details = ''
         try:
             utils.poll_until(self._service_is_active,
                              sleep_time=USAGE_SLEEP_TIME,
@@ -355,14 +375,22 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
             LOG.info(_("Created instance %s successfully.") % self.id)
             TroveInstanceCreate(instance=self,
                                 instance_size=flavor['ram']).notify()
-        except PollTimeOut:
+        except PollTimeOut as ex:
             LOG.error(_("Failed to create instance %s. "
                         "Timeout waiting for instance to become active. "
                         "No usage create-event was sent.") % self.id)
             self.update_statuses_on_time_out()
-        except Exception:
+            error_message = "%s" % ex
+            error_details = traceback.format_exc()
+        except Exception as ex:
             LOG.exception(_("Failed to send usage create-event for "
                             "instance %s.") % self.id)
+            error_message = "%s" % ex
+            error_details = traceback.format_exc()
+        finally:
+            if error_message:
+                inst_models.save_instance_fault(
+                    self.id, error_message, error_details)
 
     def create_instance(self, flavor, image_id, databases, users,
                         datastore_manager, packages, volume_size,
@@ -621,10 +649,18 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
             raise TroveError(_("Service not active, status: %s") % status)
 
         c_id = self.db_info.compute_instance_id
-        nova_status = self.nova_client.servers.get(c_id).status
-        if nova_status in [InstanceStatus.ERROR,
-                           InstanceStatus.FAILED]:
-            raise TroveError(_("Server not active, status: %s") % nova_status)
+        server = self.nova_client.servers.get(c_id)
+        server_status = server.status
+        if server_status in [InstanceStatus.ERROR,
+                             InstanceStatus.FAILED]:
+            server_message = ''
+            if server.fault:
+                server_message = "\nServer error: %s" % (
+                    server.fault.get('message', 'Unknown'))
+            raise TroveError(_("Server not active, status: %(status)s"
+                               "%(srv_msg)s") %
+                             {'status': server_status,
+                              'srv_msg': server_message})
         return False
 
     def _create_server_volume(self, flavor_id, image_id, security_groups,
@@ -844,7 +880,9 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
                    "exc": exc,
                    "trace": traceback.format_exc()})
         self.update_db(task_status=task_status)
-        raise TroveError(message=message)
+        exc_message = '\n%s' % exc if exc else ''
+        full_message = "%s%s" % (message, exc_message)
+        raise TroveError(message=full_message)
 
     def _create_volume(self, volume_size, volume_type, datastore_manager):
         LOG.debug("Begin _create_volume for id: %s" % self.id)
@@ -994,8 +1032,11 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
             self.id, self.context)
         tcp_ports = CONF.get(datastore_manager).tcp_ports
         udp_ports = CONF.get(datastore_manager).udp_ports
+        icmp = CONF.get(datastore_manager).icmp
         self._create_rules(security_group, tcp_ports, 'tcp')
         self._create_rules(security_group, udp_ports, 'udp')
+        if icmp:
+            self._create_rules(security_group, None, 'icmp')
         return [security_group["name"]]
 
     def _create_rules(self, s_group, ports, protocol):
@@ -1011,16 +1052,22 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
                              'to': to_port}
             raise MalformedSecurityGroupRuleError(message=msg)
 
-        for port_or_range in set(ports):
-            try:
-                from_, to_ = (None, None)
-                from_, to_ = utils.gen_ports(port_or_range)
-                cidr = CONF.trove_security_group_rule_cidr
-                SecurityGroupRule.create_sec_group_rule(
-                    s_group, protocol, int(from_), int(to_),
-                    cidr, self.context)
-            except (ValueError, TroveError):
-                set_error_and_raise([from_, to_])
+        cidr = CONF.trove_security_group_rule_cidr
+
+        if protocol == 'icmp':
+            SecurityGroupRule.create_sec_group_rule(
+                s_group, 'icmp', None, None,
+                cidr, self.context)
+        else:
+            for port_or_range in set(ports):
+                try:
+                    from_, to_ = (None, None)
+                    from_, to_ = utils.gen_ports(port_or_range)
+                    SecurityGroupRule.create_sec_group_rule(
+                        s_group, protocol, int(from_), int(to_),
+                        cidr, self.context)
+                except (ValueError, TroveError):
+                    set_error_and_raise([from_, to_])
 
     def _build_heat_nics(self, nics):
         ifaces = []
@@ -1781,7 +1828,7 @@ class ResizeActionBase(object):
             self._assert_processes_are_ok()
             LOG.debug("Confirming nova action")
             self._confirm_nova_action()
-        except Exception as ex:
+        except Exception:
             LOG.exception(_("Exception during nova action."))
             if need_to_revert:
                 LOG.error(_("Reverting action for instance %s") %
@@ -1797,7 +1844,7 @@ class ResizeActionBase(object):
                             "Nova server status is not ACTIVE"))
 
             LOG.error(_("Error resizing instance %s.") % self.instance.id)
-            raise ex
+            raise
 
         LOG.debug("Recording success")
         self._record_action_success()

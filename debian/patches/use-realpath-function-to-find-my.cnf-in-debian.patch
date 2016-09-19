@@ -5,9 +5,11 @@ Author: Thomas Goirand <zigo@debian.org>
 Bug-Debian: https://bugs.debian.org/829369
 Last-Update: 2016-07-26
 
---- openstack-trove-6.0.0~b2.orig/trove/guestagent/datastore/mysql_common/service.py
-+++ openstack-trove-6.0.0~b2/trove/guestagent/datastore/mysql_common/service.py
-@@ -66,7 +66,7 @@ INCLUDE_MARKER_OPERATORS = {
+Index: deb-openstack-trove/trove/guestagent/datastore/mysql_common/service.py
+===================================================================
+--- deb-openstack-trove.orig/trove/guestagent/datastore/mysql_common/service.py
++++ deb-openstack-trove/trove/guestagent/datastore/mysql_common/service.py
+@@ -69,7 +69,7 @@ INCLUDE_MARKER_OPERATORS = {
  
  OS_NAME = operating_system.get_os()
  MYSQL_CONFIG = {operating_system.REDHAT: "/etc/my.cnf",

@@ -39,11 +39,11 @@ class InstanceCreateRunner(TestRunner):
     def run_empty_instance_create(
             self, expected_states=['BUILD', 'ACTIVE'], expected_http_code=200):
         name = self.instance_info.name
-        flavor = self._get_instance_flavor()
-        trove_volume_size = CONFIG.get('trove_volume_size', 1)
+        flavor = self.get_instance_flavor()
+        volume_size = self.instance_info.volume_size
 
         instance_info = self.assert_instance_create(
-            name, flavor, trove_volume_size, [], [], None, None,
+            name, flavor, volume_size, [], [], None, None,
             CONFIG.dbaas_datastore, CONFIG.dbaas_datastore_version,
             expected_states, expected_http_code, create_helper_user=True,
             locality='affinity')
@@ -91,8 +91,8 @@ class InstanceCreateRunner(TestRunner):
 
         configuration_id = configuration_id or self.config_group_id
         name = self.instance_info.name + name_suffix
-        flavor = self._get_instance_flavor()
-        trove_volume_size = CONFIG.get('trove_volume_size', 1)
+        flavor = self.get_instance_flavor()
+        volume_size = self.instance_info.volume_size
         self.init_inst_dbs = (self.test_helper.get_valid_database_definitions()
                               if with_dbs else [])
         self.init_inst_users = (self.test_helper.get_valid_user_definitions()
@@ -100,7 +100,7 @@ class InstanceCreateRunner(TestRunner):
         self.init_inst_config_group_id = configuration_id
         if (self.init_inst_dbs or self.init_inst_users or configuration_id):
             info = self.assert_instance_create(
-                name, flavor, trove_volume_size,
+                name, flavor, volume_size,
                 self.init_inst_dbs, self.init_inst_users,
                 configuration_id, None,
                 CONFIG.dbaas_datastore, CONFIG.dbaas_datastore_version,
@@ -112,18 +112,6 @@ class InstanceCreateRunner(TestRunner):
             # There is no need to run this test as it's effectively the same as
             # the empty instance test.
             raise SkipTest("No testable initial properties provided.")
-
-    def _get_instance_flavor(self):
-        if self.EPHEMERAL_SUPPORT:
-            flavor_name = CONFIG.values.get('instance_eph_flavor_name',
-                                            'eph.rd-tiny')
-        else:
-            flavor_name = CONFIG.values.get('instance_flavor_name', 'm1.tiny')
-
-        return self.get_flavor(flavor_name)
-
-    def _get_flavor_href(self, flavor):
-        return self.auth_client.find_flavor_self_href(flavor)
 
     def assert_instance_create(
             self, name, flavor, trove_volume_size,
@@ -163,7 +151,7 @@ class InstanceCreateRunner(TestRunner):
         instance_info.users = users
         instance_info.dbaas_datastore = CONFIG.dbaas_datastore
         instance_info.dbaas_datastore_version = CONFIG.dbaas_datastore_version
-        instance_info.dbaas_flavor_href = self._get_flavor_href(flavor)
+        instance_info.dbaas_flavor_href = self.get_flavor_href(flavor)
         if self.VOLUME_SUPPORT:
             instance_info.volume = {'size': trove_volume_size}
         else:
@@ -238,7 +226,8 @@ class InstanceCreateRunner(TestRunner):
 
         return instance_info
 
-    def wait_for_created_instances(self, expected_states=['BUILD', 'ACTIVE']):
+    def run_wait_for_created_instances(
+            self, expected_states=['BUILD', 'ACTIVE']):
         instances = [self.instance_info.id]
         if self.init_inst_id:
             instances.append(self.init_inst_id)
@@ -324,10 +313,12 @@ class InstanceCreateRunner(TestRunner):
         else:
             raise SkipTest("Cleanup is not required.")
 
-    def run_wait_for_initialized_instance_delete(self,
-                                                 expected_states=['SHUTDOWN']):
+    def run_wait_for_init_delete(self, expected_states=['SHUTDOWN']):
+        delete_ids = []
         if self.init_inst_id:
-            self.assert_all_gone(self.init_inst_id, expected_states[-1])
+            delete_ids.append(self.init_inst_id)
+        if delete_ids:
+            self.assert_all_gone(delete_ids, expected_states[-1])
         else:
             raise SkipTest("Cleanup is not required.")
         self.init_inst_id = None

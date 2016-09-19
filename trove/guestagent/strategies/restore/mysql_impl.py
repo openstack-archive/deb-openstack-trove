@@ -22,6 +22,7 @@ import tempfile
 from oslo_log import log as logging
 import pexpect
 
+from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import utils
@@ -205,13 +206,22 @@ class InnoBackupEx(base.RestoreRunner, MySQLRestoreMixin):
                         ' 2>/tmp/innoprepare.log')
 
     def __init__(self, *args, **kwargs):
+        self._app = None
         super(InnoBackupEx, self).__init__(*args, **kwargs)
         self.prepare_cmd = self.base_prepare_cmd % kwargs
         self.prep_retcode = None
 
+    @property
+    def app(self):
+        if self._app is None:
+            self._app = self._build_app()
+        return self._app
+
+    def _build_app(self):
+        return dbaas.MySqlApp(dbaas.MySqlAppStatus.get())
+
     def pre_restore(self):
-        app = dbaas.MySqlApp(dbaas.MySqlAppStatus.get())
-        app.stop_db()
+        self.app.stop_db()
         LOG.info(_("Cleaning out restore location: %s."),
                  self.restore_location)
         operating_system.chmod(self.restore_location, FileMode.SET_FULL,
@@ -229,8 +239,7 @@ class InnoBackupEx(base.RestoreRunner, MySQLRestoreMixin):
                                force=True, as_root=True)
         self._delete_old_binlogs()
         self.reset_root_password()
-        app = dbaas.MySqlApp(dbaas.MySqlAppStatus.get())
-        app.start_mysql()
+        self.app.start_mysql()
 
     def _delete_old_binlogs(self):
         files = glob.glob(os.path.join(self.restore_location, "ib_logfile*"))
@@ -301,8 +310,9 @@ class InnoBackupExIncremental(InnoBackupEx):
             self._incremental_restore(parent_location, parent_checksum)
             # for *this* backup set the incremental_dir
             # just use the checksum for the incremental path as it is
-            # sufficiently unique /var/lib/mysql/data/<checksum>
-            incremental_dir = os.path.join(self.restore_location, checksum)
+            # sufficiently unique /var/lib/mysql/<checksum>
+            incremental_dir = os.path.join(
+                cfg.get_configuration_property('mount_point'), checksum)
             operating_system.create_directory(incremental_dir, as_root=True)
             command = self._incremental_restore_cmd(incremental_dir)
         else:

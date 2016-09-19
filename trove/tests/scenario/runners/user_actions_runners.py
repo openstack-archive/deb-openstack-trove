@@ -34,11 +34,23 @@ class UserActionsRunner(TestRunner):
     def __init__(self):
         super(UserActionsRunner, self).__init__()
         self.user_defs = []
+        self.renamed_user_orig_def = None
 
     @property
     def first_user_def(self):
         if self.user_defs:
+            # Try to use the first user with databases if any.
+            for user_def in self.user_defs:
+                if user_def['databases']:
+                    return user_def
             return self.user_defs[0]
+        raise SkipTest("No valid user definitions provided.")
+
+    @property
+    def non_existing_user_def(self):
+        user_def = self.test_helper.get_non_existing_user_definition()
+        if user_def:
+            return user_def
         raise SkipTest("No valid user definitions provided.")
 
     def run_users_create(self, expected_http_code=202):
@@ -229,15 +241,15 @@ class UserActionsRunner(TestRunner):
     def run_user_create_with_blank_name(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        usr_def = self.test_helper.get_non_existing_user_definition()
         # Test with missing user name attribute.
-        no_name_usr_def = self.copy_dict(usr_def, ignored_keys=['name'])
+        no_name_usr_def = self.copy_dict(self.non_existing_user_def,
+                                         ignored_keys=['name'])
         self.assert_users_create_failure(
             self.instance_info.id, no_name_usr_def,
             expected_exception, expected_http_code)
 
         # Test with empty user name attribute.
-        blank_name_usr_def = self.copy_dict(usr_def)
+        blank_name_usr_def = self.copy_dict(self.non_existing_user_def)
         blank_name_usr_def.update({'name': ''})
         self.assert_users_create_failure(
             self.instance_info.id, blank_name_usr_def,
@@ -246,15 +258,16 @@ class UserActionsRunner(TestRunner):
     def run_user_create_with_blank_password(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        usr_def = self.test_helper.get_non_existing_user_definition()
         # Test with missing password attribute.
-        no_pass_usr_def = self.copy_dict(usr_def, ignored_keys=['password'])
+        no_pass_usr_def = self.copy_dict(self.non_existing_user_def,
+                                         ignored_keys=['password'])
         self.assert_users_create_failure(
             self.instance_info.id, no_pass_usr_def,
             expected_exception, expected_http_code)
 
         # Test with missing databases attribute.
-        no_db_usr_def = self.copy_dict(usr_def, ignored_keys=['databases'])
+        no_db_usr_def = self.copy_dict(self.non_existing_user_def,
+                                       ignored_keys=['databases'])
         self.assert_users_create_failure(
             self.instance_info.id, no_db_usr_def,
             expected_exception, expected_http_code)
@@ -351,6 +364,7 @@ class UserActionsRunner(TestRunner):
         expected_def = None
         for user_def in self.user_defs:
             if user_def['name'] == user_name:
+                self.renamed_user_orig_def = dict(user_def)
                 user_def.update(update_attribites)
                 expected_def = user_def
 
@@ -359,6 +373,30 @@ class UserActionsRunner(TestRunner):
         # Verify using 'user-show' and 'user-list'.
         self.assert_user_show(instance_id, expected_def, 200)
         self.assert_users_list(instance_id, self.user_defs, 200)
+
+    def run_user_recreate_with_no_access(self, expected_http_code=202):
+        if (self.renamed_user_orig_def and
+                self.renamed_user_orig_def['databases']):
+            self.assert_user_recreate_with_no_access(
+                self.instance_info.id, self.renamed_user_orig_def,
+                expected_http_code)
+        else:
+            raise SkipTest("No renamed users with databases.")
+
+    def assert_user_recreate_with_no_access(self, instance_id, original_def,
+                                            expected_http_code=202):
+        # Recreate a previously renamed user without assigning any access
+        # rights to it.
+        recreated_user_def = dict(original_def)
+        recreated_user_def.update({'databases': []})
+        user_def = self.assert_users_create(
+            instance_id, [recreated_user_def], expected_http_code)
+
+        # Append the new user to defs for cleanup.
+        self.user_defs.extend(user_def)
+
+        # Assert empty user access.
+        self.assert_user_access_show(instance_id, recreated_user_def, 200)
 
     def run_user_delete(self, expected_http_code=202):
         for user_def in self.user_defs:
@@ -390,9 +428,9 @@ class UserActionsRunner(TestRunner):
     def run_nonexisting_user_show(
             self, expected_exception=exceptions.NotFound,
             expected_http_code=404):
-        usr_def = self.test_helper.get_non_existing_user_definition()
         self.assert_user_show_failure(
-            self.instance_info.id, {'name': usr_def['name']},
+            self.instance_info.id,
+            {'name': self.non_existing_user_def['name']},
             expected_exception, expected_http_code)
 
     def assert_user_show_failure(self, instance_id, user_def,
@@ -418,8 +456,7 @@ class UserActionsRunner(TestRunner):
 
     def run_nonexisting_user_update(self, expected_http_code=404):
         # Test valid update on a non-existing user.
-        usr_def = self.test_helper.get_non_existing_user_definition()
-        update_def = {'name': usr_def['name']}
+        update_def = {'name': self.non_existing_user_def['name']}
         self.assert_user_attribute_update_failure(
             self.instance_info.id, update_def, update_def,
             exceptions.NotFound, expected_http_code)
@@ -427,9 +464,9 @@ class UserActionsRunner(TestRunner):
     def run_nonexisting_user_delete(
             self, expected_exception=exceptions.NotFound,
             expected_http_code=404):
-        usr_def = self.test_helper.get_non_existing_user_definition()
         self.assert_user_delete_failure(
-            self.instance_info.id, {'name': usr_def['name']},
+            self.instance_info.id,
+            {'name': self.non_existing_user_def['name']},
             expected_exception, expected_http_code)
 
     def assert_user_delete_failure(
@@ -474,3 +511,9 @@ class PerconaUserActionsRunner(MysqlUserActionsRunner):
 
     def __init__(self):
         super(PerconaUserActionsRunner, self).__init__()
+
+
+class PxcUserActionsRunner(MysqlUserActionsRunner):
+
+    def __init__(self):
+        super(PxcUserActionsRunner, self).__init__()

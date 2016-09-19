@@ -1,9 +1,17 @@
-openstack-trove (1:6.0.0~b2-3) UNRELEASED; urgency=medium
+openstack-trove (1:6.0.0~b3-1) experimental; urgency=medium
 
+  * New upstream release.
+  * Fixed (build-)depends for this release.
+  * Using OpenStack's Gerrit as VCS URLs.
+  * Refreshed patches:
+    - Fix-apischema-for-boolean_string.patch
+    - better-default-config.patch
+    - blacklist-failing-tests.patch
+    - use-realpath-function-to-find-my.cnf-in-debian.patch
   * Fixed missing swiftclient EPOC.
   * Add: use-realpath-function-to-find-my.cnf-in-debian.patch.
 
- -- Thomas Goirand <zigo@debian.org>  Tue, 26 Jul 2016 15:58:07 +0200
+ -- Thomas Goirand <zigo@debian.org>  Mon, 19 Sep 2016 16:03:49 +0200
 
 openstack-trove (1:6.0.0~b2-1) experimental; urgency=medium
 

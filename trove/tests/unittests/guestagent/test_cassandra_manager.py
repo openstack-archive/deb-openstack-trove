@@ -455,7 +455,7 @@ class GuestAgentCassandraDBManagerTest(DatastoreManagerTest):
             found = self.manager.list_databases(self.context)
             self.assertEqual(2, len(found))
             self.assertEqual(3, len(found[0]))
-            self.assertEqual(None, found[1])
+            self.assertIsNone(found[1])
             self.assertIn(db1.serialize(), found[0])
             self.assertIn(db2.serialize(), found[0])
             self.assertIn(db3.serialize(), found[0])
@@ -606,7 +606,7 @@ class GuestAgentCassandraDBManagerTest(DatastoreManagerTest):
             found = self.manager.list_users(self.context)
             self.assertEqual(2, len(found))
             self.assertEqual(3, len(found[0]))
-            self.assertEqual(None, found[1])
+            self.assertIsNone(found[1])
             self.assertIn(usr1.serialize(), found[0])
             self.assertIn(usr2.serialize(), found[0])
             self.assertIn(usr3.serialize(), found[0])
@@ -775,3 +775,22 @@ class GuestAgentCassandraDBManagerTest(DatastoreManagerTest):
                           'list_superusers',
                           return_value=[trove_admin, other_admin]):
             self.assertTrue(self.manager.is_root_enabled(self.context))
+
+    def test_guest_log_enable(self):
+        self._assert_guest_log_enable(False, 'INFO')
+        self._assert_guest_log_enable(True, 'OFF')
+
+    def _assert_guest_log_enable(self, disable, expected_level):
+        with patch.multiple(
+                self.manager._app,
+                logback_conf_manager=DEFAULT,
+                _run_nodetool_command=DEFAULT
+        ) as app_mocks:
+            self.assertFalse(self.manager.guest_log_enable(
+                Mock(), Mock(), disable))
+
+            (app_mocks['logback_conf_manager'].apply_system_override.
+             assert_called_once_with(
+                {'configuration': {'root': {'@level': expected_level}}}))
+            app_mocks['_run_nodetool_command'].assert_called_once_with(
+                'setlogginglevel', 'root', expected_level)

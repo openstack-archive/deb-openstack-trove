@@ -29,10 +29,10 @@ from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import instance as rd_instance
-from trove.common import pagination
 from trove.common.stream_codecs import IniCodec
 from trove.common.stream_codecs import PropertiesCodec
 from trove.common.stream_codecs import SafeYamlCodec
+from trove.common.stream_codecs import XmlCodec
 from trove.common import utils
 from trove.guestagent.common.configuration import ConfigurationManager
 from trove.guestagent.common.configuration import OneFileOverrideStrategy
@@ -63,6 +63,7 @@ class CassandraApp(object):
 
     CASSANDRA_CONF_FILE = "cassandra.yaml"
     CASSANDRA_TOPOLOGY_FILE = 'cassandra-rackdc.properties'
+    CASSANDRA_LOGBACK_FILE = "logback.xml"
 
     _TOPOLOGY_CODEC = PropertiesCodec(
         delimiter='=', unpack_singletons=True, string_mappings={
@@ -82,6 +83,14 @@ class CassandraApp(object):
             self.cassandra_owner, self.cassandra_owner,
             SafeYamlCodec(default_flow_style=False), requires_root=True,
             override_strategy=OneFileOverrideStrategy(revision_dir))
+
+        lb_revision_dir = guestagent_utils.build_file_path(
+            os.path.dirname(self.cassandra_logback), 'logback-overrides')
+        self.logback_conf_manager = ConfigurationManager(
+            self.cassandra_logback,
+            self.cassandra_owner, self.cassandra_owner,
+            XmlCodec(), requires_root=True,
+            override_strategy=OneFileOverrideStrategy(lb_revision_dir))
 
     @property
     def service_candidates(self):
@@ -117,6 +126,20 @@ class CassandraApp(object):
     @property
     def cassandra_working_dir(self):
         return "/var/lib/cassandra"
+
+    @property
+    def cassandra_system_log_file(self):
+        return guestagent_utils.build_file_path(
+            self.cassandra_log_dir, 'system', 'log')
+
+    @property
+    def cassandra_log_dir(self):
+        return "/var/log/cassandra"
+
+    @property
+    def cassandra_logback(self):
+        return guestagent_utils.build_file_path(self.cassandra_conf_dir,
+                                                self.CASSANDRA_LOGBACK_FILE)
 
     @property
     def default_superuser_name(self):
@@ -687,6 +710,16 @@ class CassandraApp(object):
         # <keyspace> ( <table> ... )
         self._run_nodetool_command('flush', keyspace, *tables)
 
+    def set_logging_level(self, log_level):
+        """Set the log Cassandra's system log verbosity level.
+        """
+        # Apply the change at runtime.
+        self._run_nodetool_command('setlogginglevel', 'root', log_level)
+
+        # Persist the change.
+        self.logback_conf_manager.apply_system_override(
+            {'configuration': {'root': {'@level': log_level}}})
+
     def _run_nodetool_command(self, cmd, *args, **kwargs):
         """Execute a nodetool command on this node.
         """
@@ -840,9 +873,9 @@ class CassandraAdmin(object):
         List all non-superuser accounts. Omit names on the ignored list.
         Return an empty set if None.
         """
-        users = [user.serialize() for user in
-                 self._get_listed_users(self.client)]
-        return pagination.paginate_list(users, limit, marker, include_marker)
+        return guestagent_utils.serialize_list(
+            self._get_listed_users(self.client),
+            limit=limit, marker=marker, include_marker=include_marker)
 
     def _get_listed_users(self, client):
         """
@@ -1093,10 +1126,9 @@ class CassandraAdmin(object):
 
     def list_databases(self, context, limit=None, marker=None,
                        include_marker=False):
-        databases = [keyspace.serialize() for keyspace
-                     in self._get_available_keyspaces(self.client)]
-        return pagination.paginate_list(databases, limit, marker,
-                                        include_marker)
+        return guestagent_utils.serialize_list(
+            self._get_available_keyspaces(self.client),
+            limit=limit, marker=marker, include_marker=include_marker)
 
     def _get_available_keyspaces(self, client):
         """

@@ -5,10 +5,10 @@ Author: Thomas Goirand <zigo@debian.org>
 Forwarded: no
 Last-Update: 2016-04-01
 
-Index: openstack-trove/etc/trove/trove-taskmanager.conf.sample
+Index: deb-openstack-trove/etc/trove/trove-taskmanager.conf.sample
 ===================================================================
---- openstack-trove.orig/etc/trove/trove-taskmanager.conf.sample
-+++ openstack-trove/etc/trove/trove-taskmanager.conf.sample
+--- deb-openstack-trove.orig/etc/trove/trove-taskmanager.conf.sample
++++ deb-openstack-trove/etc/trove/trove-taskmanager.conf.sample
 @@ -27,11 +27,11 @@ control_exchange = trove
  db_api_implementation = trove.db.sqlalchemy.api
  
@@ -26,8 +26,8 @@ Index: openstack-trove/etc/trove/trove-taskmanager.conf.sample
  
  # nova_compute_url, cinder_url, swift_url, and heat_url can all be fetched
  # from Keystone. To fetch from Keystone, comment out nova_compute_url,
-@@ -218,7 +218,7 @@ rabbit_password=f7999d1955c5014aa32c
- [mysql]
+@@ -220,7 +220,7 @@ rabbit_password=f7999d1955c5014aa32c
+ icmp = True
  # Format (single port or port range): A, B-C
  # where C greater than B
 -tcp_ports = 3306
@@ -35,10 +35,10 @@ Index: openstack-trove/etc/trove/trove-taskmanager.conf.sample
  volume_support = True
  device_path = /dev/vdb
  
-Index: openstack-trove/etc/trove/trove.conf.sample
+Index: deb-openstack-trove/etc/trove/trove.conf.sample
 ===================================================================
---- openstack-trove.orig/etc/trove/trove.conf.sample
-+++ openstack-trove/etc/trove/trove.conf.sample
+--- deb-openstack-trove.orig/etc/trove/trove.conf.sample
++++ deb-openstack-trove/etc/trove/trove.conf.sample
 @@ -37,11 +37,11 @@ control_exchange = trove
  db_api_implementation = "trove.db.sqlalchemy.api"
  

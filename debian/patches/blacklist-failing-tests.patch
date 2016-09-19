@@ -5,10 +5,10 @@ Author: Thomas Goirand <zigo@debian.org>
 Forwarded: no
 Last-Update: 2016-07-18
 
-diff --git a/trove/tests/unittests/common/test_template.py b/trove/tests/unittests/common/test_template.py
-index 3c904ea..b260af0 100644
---- a/trove/tests/unittests/common/test_template.py
-+++ b/trove/tests/unittests/common/test_template.py
+Index: deb-openstack-trove/trove/tests/unittests/common/test_template.py
+===================================================================
+--- deb-openstack-trove.orig/trove/tests/unittests/common/test_template.py
++++ deb-openstack-trove/trove/tests/unittests/common/test_template.py
 @@ -12,6 +12,7 @@
  import re
  
@@ -17,7 +17,7 @@ index 3c904ea..b260af0 100644
  
  from trove.common import exception
  from trove.common import template
-@@ -53,6 +54,7 @@ class TemplateTest(trove_testtools.TestCase):
+@@ -53,6 +54,7 @@ class TemplateTest(trove_testtools.TestC
          self.assertIsNotNone(server_id)
          self.assertTrue(len(server_id) > 1)
  
@@ -25,7 +25,7 @@ index 3c904ea..b260af0 100644
      def test_rendering(self):
          rendered = self.template.render(flavor=self.flavor_dict,
                                          server_id=self.server_id)
-@@ -61,6 +63,7 @@ class TemplateTest(trove_testtools.TestCase):
+@@ -61,6 +63,7 @@ class TemplateTest(trove_testtools.TestC
                                 self.flavor_dict,
                                 self.server_id)
  
@@ -33,7 +33,7 @@ index 3c904ea..b260af0 100644
      def test_single_instance_config_rendering(self):
          datastore = Mock(spec=DatastoreVersion)
          datastore.datastore_name = 'MySql'
-@@ -72,6 +75,7 @@ class TemplateTest(trove_testtools.TestCase):
+@@ -72,6 +75,7 @@ class TemplateTest(trove_testtools.TestC
          self.validate_template(config.render(), "query_cache_size",
                                 self.flavor_dict, self.server_id)
  
@@ -41,7 +41,7 @@ index 3c904ea..b260af0 100644
      def test_renderer_discovers_special_config(self):
          """Finds our special config file for the version 'mysql-test'."""
          datastore = Mock(spec=DatastoreVersion)
-@@ -84,6 +88,7 @@ class TemplateTest(trove_testtools.TestCase):
+@@ -84,6 +88,7 @@ class TemplateTest(trove_testtools.TestC
          self.validate_template(config.render(), "hyper",
                                 {'ram': 0}, self.server_id)
  
@@ -49,7 +49,7 @@ index 3c904ea..b260af0 100644
      def test_replica_source_config_rendering(self):
          datastore = Mock(spec=DatastoreVersion)
          datastore.datastore_name = 'MySql'
-@@ -94,6 +99,7 @@ class TemplateTest(trove_testtools.TestCase):
+@@ -94,6 +99,7 @@ class TemplateTest(trove_testtools.TestC
                                                        self.server_id)
          self.assertTrue(self._find_in_template(config.render(), "log_bin"))
  
@@ -57,7 +57,7 @@ index 3c904ea..b260af0 100644
      def test_replica_config_rendering(self):
          datastore = Mock(spec=DatastoreVersion)
          datastore.datastore_name = 'MySql'
-@@ -135,6 +141,7 @@ class HeatTemplateLoadTest(trove_testtools.TestCase):
+@@ -135,6 +141,7 @@ class HeatTemplateLoadTest(trove_testtoo
          self.assertNotEqual(mysql_tmpl.name, self.default)
          utils.ENV._load_template = orig
  
@@ -65,7 +65,7 @@ index 3c904ea..b260af0 100644
      def test_heat_template_load_success(self):
          mysql_tmpl = template.load_heat_template('mysql')
          redis_tmpl = template.load_heat_template('redis')
-@@ -155,6 +162,7 @@ class HeatTemplateLoadTest(trove_testtools.TestCase):
+@@ -155,6 +162,7 @@ class HeatTemplateLoadTest(trove_testtoo
          self.assertEqual(self.default, percona_tmpl.name)
          self.assertEqual(self.default, couchbase_tmpl.name)
  
@@ -73,7 +73,7 @@ index 3c904ea..b260af0 100644
      def test_render_templates_with_ports_from_config(self):
          mysql_tmpl = template.load_heat_template('mysql')
          tcp_rules = [{'cidr': "0.0.0.0/0",
-@@ -176,6 +184,7 @@ class HeatTemplateLoadTest(trove_testtools.TestCase):
+@@ -176,6 +184,7 @@ class HeatTemplateLoadTest(trove_testtoo
          self.assertIn('FromPort: "3320"', output)
          self.assertIn('ToPort: "33022"', output)
  
@@ -81,10 +81,10 @@ index 3c904ea..b260af0 100644
      def test_no_rules_if_no_ports(self):
          mysql_tmpl = template.load_heat_template('mysql')
          output = mysql_tmpl.render(
-diff --git a/trove/tests/unittests/guestagent/test_dbaas.py b/trove/tests/unittests/guestagent/test_dbaas.py
-index c74462d..5161a64 100644
---- a/trove/tests/unittests/guestagent/test_dbaas.py
-+++ b/trove/tests/unittests/guestagent/test_dbaas.py
+Index: deb-openstack-trove/trove/tests/unittests/guestagent/test_dbaas.py
+===================================================================
+--- deb-openstack-trove.orig/trove/tests/unittests/guestagent/test_dbaas.py
++++ deb-openstack-trove/trove/tests/unittests/guestagent/test_dbaas.py
 @@ -18,6 +18,7 @@ import subprocess
  import tempfile
  import time
@@ -93,7 +93,7 @@ index c74462d..5161a64 100644
  
  from mock import ANY
  from mock import call
-@@ -1309,6 +1310,7 @@ class MySqlAppTest(trove_testtools.TestCase):
+@@ -1287,6 +1288,7 @@ class MySqlAppTest(trove_testtools.TestC
          self.assertEqual(expected, args[0],
                           "Sql statements are not the same")
  
@@ -101,10 +101,10 @@ index c74462d..5161a64 100644
      @patch.object(dbaas, 'get_engine',
                    return_value=MagicMock(name='get_engine'))
      def test__wait_for_slave_status(self, *args):
-diff --git a/trove/tests/unittests/taskmanager/test_models.py b/trove/tests/unittests/taskmanager/test_models.py
-index 6f875d0..828dcc2 100644
---- a/trove/tests/unittests/taskmanager/test_models.py
-+++ b/trove/tests/unittests/taskmanager/test_models.py
+Index: deb-openstack-trove/trove/tests/unittests/taskmanager/test_models.py
+===================================================================
+--- deb-openstack-trove.orig/trove/tests/unittests/taskmanager/test_models.py
++++ deb-openstack-trove/trove/tests/unittests/taskmanager/test_models.py
 @@ -15,6 +15,7 @@ import datetime
  import os
  from tempfile import NamedTemporaryFile
@@ -113,7 +113,7 @@ index 6f875d0..828dcc2 100644
  
  from cinderclient import exceptions as cinder_exceptions
  import cinderclient.v2.client as cinderclient
-@@ -848,6 +849,7 @@ class BuiltInstanceTasksTest(trove_testtools.TestCase):
+@@ -858,6 +859,7 @@ class BuiltInstanceTasksTest(trove_testt
              replica_context, config_content)
          mock_update_db.assert_called_with(slave_of_id=master.id)
  

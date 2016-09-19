@@ -69,7 +69,7 @@ class InstanceCreateWaitGroup(TestGroup):
     @test
     def wait_for_instances(self):
         """Waiting for all instances to become active."""
-        self.test_runner.wait_for_created_instances()
+        self.test_runner.run_wait_for_created_instances()
 
     @test(depends_on=[wait_for_instances])
     def add_initialized_instance_data(self):
@@ -98,6 +98,7 @@ class InstanceInitDeleteGroup(TestGroup):
 
 
 @test(depends_on_groups=[groups.INST_INIT_DELETE],
+      runs_after_groups=[groups.INST_ERROR_DELETE],
       groups=[GROUP, groups.INST_INIT_DELETE_WAIT])
 class InstanceInitDeleteWaitGroup(TestGroup):
     """Test that Initialized Instance Delete Completes."""
@@ -107,11 +108,11 @@ class InstanceInitDeleteWaitGroup(TestGroup):
             InstanceCreateRunnerFactory.instance())
 
     @test
-    def wait_for_initialized_instance_delete(self):
-        """Wait for the initialized instance to be deleted."""
-        self.test_runner.run_wait_for_initialized_instance_delete()
+    def wait_for_init_delete(self):
+        """Wait for the initialized instance to be gone."""
+        self.test_runner.run_wait_for_init_delete()
 
-    @test(runs_after=[wait_for_initialized_instance_delete])
+    @test(runs_after=[wait_for_init_delete])
     def delete_initial_configuration(self):
         """Delete the initial configuration group."""
         self.test_runner.run_initial_configuration_delete()
