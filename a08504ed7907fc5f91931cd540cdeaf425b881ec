@@ -1,0 +1,10 @@
+Code-Review+2: Peter Stachowski <peter@tesora.com>
+Code-Review+2: mariam john <mariamj@us.ibm.com>
+Workflow+1: mariam john <mariamj@us.ibm.com>
+Code-Review+1: Petr Malik <pmalik@tesora.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 20 Sep 2016 05:45:28 +0000
+Reviewed-on: https://review.openstack.org/372706
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/stable/newton
