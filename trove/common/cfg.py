@@ -23,6 +23,7 @@ from oslo_log import log as logging
 from oslo_middleware import cors
 from osprofiler import opts as profiler
 
+from trove.common.i18n import _
 from trove.version import version_info as version
 
 
@@ -75,7 +76,7 @@ common_opts = [
                help='Service type to use when searching catalog.'),
     cfg.StrOpt('heat_endpoint_type', default='publicURL',
                help='Service endpoint type to use when searching catalog.'),
-    cfg.URIOpt('swift_url', help='URL ending in AUTH_.'),
+    cfg.URIOpt('swift_url', help='URL ending in ``AUTH_``.'),
     cfg.StrOpt('swift_service_type', default='object-store',
                help='Service type to use when searching catalog.'),
     cfg.StrOpt('swift_endpoint_type', default='publicURL',
@@ -548,7 +549,10 @@ mysql_opts = [
                help='List of Guest Logs to expose for publishing.'),
     cfg.IntOpt('guest_log_long_query_time', default=1000,
                help='The time in milliseconds that a statement must take in '
-                    'in order to be logged in the slow_query log.'),
+                    'in order to be logged in the slow_query log.',
+               deprecated_for_removal=True,
+               deprecated_reason='Will be replaced by a configuration group '
+               'option: long_query_time'),
     cfg.IntOpt('default_password_length', default=36,
                help='Character length of generated passwords.',
                deprecated_name='default_password_length',
@@ -632,7 +636,10 @@ percona_opts = [
                help='List of Guest Logs to expose for publishing.'),
     cfg.IntOpt('guest_log_long_query_time', default=1000,
                help='The time in milliseconds that a statement must take in '
-                    'in order to be logged in the slow_query log.'),
+                    'in order to be logged in the slow_query log.',
+               deprecated_for_removal=True,
+               deprecated_reason='Will be replaced by a configuration group '
+               'option: long_query_time'),
     cfg.IntOpt('default_password_length',
                default='${mysql.default_password_length}',
                help='Character length of generated passwords.',
@@ -721,7 +728,10 @@ pxc_opts = [
                help='List of Guest Logs to expose for publishing.'),
     cfg.IntOpt('guest_log_long_query_time', default=1000,
                help='The time in milliseconds that a statement must take in '
-                    'in order to be logged in the slow_query log.'),
+                    'in order to be logged in the slow_query log.',
+               deprecated_for_removal=True,
+               deprecated_reason='Will be replaced by a configuration group '
+               'option: long_query_time'),
     cfg.IntOpt('default_password_length',
                default='${mysql.default_password_length}',
                help='Character length of generated passwords.',
@@ -1071,6 +1081,13 @@ postgresql_opts = [
                 help='Incremental Backup Runner based on the default '
                 'strategy. For strategies that do not implement an '
                 'incremental, the runner will use the default full backup.'),
+    cfg.StrOpt('replication_strategy',
+               default='PostgresqlReplicationStreaming',
+               help='Default strategy for replication.'),
+    cfg.StrOpt('replication_namespace',
+               default='trove.guestagent.strategies.replication.experimental.'
+                       'postgresql_impl',
+               help='Namespace to load replication strategies from.'),
     cfg.StrOpt('mount_point', default='/var/lib/postgresql',
                help="Filesystem path for mounting "
                "volumes if volume support is enabled."),
@@ -1095,7 +1112,7 @@ postgresql_opts = [
                 help='Whether to provision a Cinder volume for datadir.'),
     cfg.StrOpt('device_path', default='/dev/vdb'),
     cfg.ListOpt('ignore_users', default=['os_admin', 'postgres', 'root']),
-    cfg.ListOpt('ignore_dbs', default=['postgres']),
+    cfg.ListOpt('ignore_dbs', default=['os_admin', 'postgres']),
     cfg.StrOpt('root_controller',
                default='trove.extensions.postgresql.service'
                '.PostgreSQLRootController',
@@ -1106,7 +1123,10 @@ postgresql_opts = [
                help="The time in milliseconds that a statement must take in "
                     "in order to be logged in the 'general' log.  A value of "
                     "'0' logs all statements, while '-1' turns off "
-                    "statement logging."),
+                    "statement logging.",
+               deprecated_for_removal=True,
+               deprecated_reason='Will be replaced by configuration group '
+               'option: log_min_duration_statement'),
     cfg.IntOpt('default_password_length', default=36,
                help='Character length of generated passwords.',
                deprecated_name='default_password_length',
@@ -1268,7 +1288,7 @@ db2_opts = [
                 help='Whether to provision a Cinder volume for datadir.'),
     cfg.StrOpt('device_path', default='/dev/vdb',
                help='Device path for volume if volume support is enabled.'),
-    cfg.StrOpt('backup_strategy', default='DB2Backup',
+    cfg.StrOpt('backup_strategy', default='DB2OfflineBackup',
                help='Default strategy to perform backups.'),
     cfg.StrOpt('replication_strategy', default=None,
                help='Default strategy for replication.'),
@@ -1382,7 +1402,10 @@ mariadb_opts = [
                help='List of Guest Logs to expose for publishing.'),
     cfg.IntOpt('guest_log_long_query_time', default=1000,
                help='The time in milliseconds that a statement must take in '
-                    'in order to be logged in the slow_query log.'),
+                    'in order to be logged in the slow_query log.',
+               deprecated_for_removal=True,
+               deprecated_reason='Will be replaced by a configuration group '
+               'option: long_query_time'),
     cfg.BoolOpt('cluster_support', default=True,
                 help='Enable clusters to be created and managed.'),
     cfg.IntOpt('min_cluster_member_count', default=3,

@@ -107,9 +107,14 @@ class BackupRunner(TestRunner):
         return [database.name for database in
                 self.auth_client.databases.list(instance_id)]
 
-    def assert_backup_create(self, name, desc, instance_id, parent_id=None):
-        result = self.auth_client.backups.create(
-            name, instance_id, desc, parent_id=parent_id)
+    def assert_backup_create(self, name, desc, instance_id, parent_id=None,
+                             incremental=False):
+        if incremental:
+            result = self.auth_client.backups.create(
+                name, instance_id, desc, incremental=incremental)
+        else:
+            result = self.auth_client.backups.create(
+                name, instance_id, desc, parent_id=parent_id)
         self.assert_equal(name, result.name,
                           'Unexpected backup name')
         self.assert_equal(desc, result.description,
@@ -255,8 +260,7 @@ class BackupRunner(TestRunner):
             self.unauth_client.backups.get, self.backup_info.id)
         # we're using a different client, so we'll check the return code
         # on it explicitly, instead of depending on 'assert_raises'
-        self.assert_client_code(expected_http_code=expected_http_code,
-                                client=self.unauth_client)
+        self.assert_client_code(expected_http_code, client=self.unauth_client)
 
     def run_add_data_for_inc_backup_1(self):
         self.backup_host = self.get_instance_host()
@@ -285,7 +289,8 @@ class BackupRunner(TestRunner):
         suffix = '_inc_2'
         self.backup_inc_2_info = self.assert_backup_create(
             self.BACKUP_NAME + suffix, self.BACKUP_DESC + suffix,
-            self.instance_info.id, parent_id=self.backup_inc_1_info.id)
+            self.instance_info.id, parent_id=self.backup_inc_1_info.id,
+            incremental=True)
 
     def run_wait_for_inc_backup_2(self):
         self._verify_backup(self.backup_inc_2_info.id)
@@ -298,7 +303,7 @@ class BackupRunner(TestRunner):
     def assert_restore_from_backup(self, backup_ref, suffix='',
                                    expected_http_code=200):
         result = self._restore_from_backup(backup_ref, suffix=suffix)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         self.assert_equal('BUILD', result.status,
                           'Unexpected instance status')
         return result.id
@@ -368,7 +373,7 @@ class BackupRunner(TestRunner):
     def assert_delete_restored_instance(
             self, instance_id, expected_http_code):
         self.auth_client.instances.delete(instance_id)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
     def run_delete_restored_inc_1_instance(self, expected_http_code=202):
         self.assert_delete_restored_instance(
@@ -406,8 +411,7 @@ class BackupRunner(TestRunner):
             self.unauth_client.backups.delete, self.backup_info.id)
         # we're using a different client, so we'll check the return code
         # on it explicitly, instead of depending on 'assert_raises'
-        self.assert_client_code(expected_http_code=expected_http_code,
-                                client=self.unauth_client)
+        self.assert_client_code(expected_http_code, client=self.unauth_client)
 
     def run_delete_inc_2_backup(self, expected_http_code=202):
         self.assert_delete_backup(
@@ -417,7 +421,7 @@ class BackupRunner(TestRunner):
     def assert_delete_backup(
             self, backup_id, expected_http_code):
         self.auth_client.backups.delete(backup_id)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         self._wait_until_backup_is_gone(backup_id)
 
     def _wait_until_backup_is_gone(self, backup_id):

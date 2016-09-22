@@ -347,6 +347,10 @@ class DBaaSAPINotification(object):
     def server_type(self, server_type):
         self.payload['server_type'] = server_type
 
+    @property
+    def request_id(self):
+        return self.payload['request_id']
+
     def __init__(self, context, **kwargs):
         self.context = context
         self.needs_end_notification = True
@@ -502,6 +506,16 @@ class DBaaSInstanceDelete(DBaaSAPINotification):
         return ['instance_id']
 
 
+class DBaaSInstanceResetStatus(DBaaSAPINotification):
+
+    def event_type(self):
+        return 'instance_reset_status'
+
+    @abc.abstractmethod
+    def required_start_traits(self):
+        return ['instance_id']
+
+
 class DBaaSInstanceDetach(DBaaSAPINotification):
 
     @abc.abstractmethod
@@ -555,6 +569,17 @@ class DBaaSClusterDelete(DBaaSAPINotification):
     @abc.abstractmethod
     def event_type(self):
         return 'cluster_delete'
+
+    @abc.abstractmethod
+    def required_start_traits(self):
+        return ['cluster_id']
+
+
+class DBaaSClusterResetStatus(DBaaSAPINotification):
+
+    @abc.abstractmethod
+    def event_type(self):
+        return 'cluster_reset_status'
 
     @abc.abstractmethod
     def required_start_traits(self):
@@ -753,3 +778,14 @@ class DBaaSConfigurationEdit(DBaaSAPINotification):
     @abc.abstractmethod
     def required_start_traits(self):
         return ['configuration_id']
+
+
+class DBaaSInstanceUpgrade(DBaaSAPINotification):
+
+    @abc.abstractmethod
+    def event_type(self):
+        return 'upgrade'
+
+    @abc.abstractmethod
+    def required_start_traits(self):
+        return ['instance_id', 'datastore_version_id']

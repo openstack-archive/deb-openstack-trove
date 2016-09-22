@@ -17,6 +17,7 @@
 """Model classes that form the core of instances functionality."""
 from datetime import datetime
 from datetime import timedelta
+import os.path
 import re
 
 from novaclient import exceptions as nova_exceptions
@@ -98,6 +99,7 @@ class InstanceStatus(object):
     RESTART_REQUIRED = "RESTART_REQUIRED"
     PROMOTE = "PROMOTE"
     EJECT = "EJECT"
+    UPGRADE = "UPGRADE"
     DETACH = "DETACH"
 
 
@@ -129,7 +131,8 @@ def load_simple_instance_server_status(context, db_info):
 
 
 # Invalid states to contact the agent
-AGENT_INVALID_STATUSES = ["BUILD", "REBOOT", "RESIZE", "PROMOTE", "EJECT"]
+AGENT_INVALID_STATUSES = ["BUILD", "REBOOT", "RESIZE", "PROMOTE", "EJECT",
+                          "UPGRADE"]
 
 
 class SimpleInstance(object):
@@ -174,6 +177,9 @@ class SimpleInstance(object):
         self.locality = locality
 
         self.slave_list = None
+
+    def __repr__(self, *args, **kwargs):
+        return "%s(%s)" % (self.name, self.id)
 
     @property
     def addresses(self):
@@ -241,6 +247,10 @@ class SimpleInstance(object):
         return self.status in [InstanceStatus.BUILD]
 
     @property
+    def is_error(self):
+        return self.status in [InstanceStatus.ERROR]
+
+    @property
     def is_datastore_running(self):
         """True if the service status indicates datastore is up and running."""
         return self.datastore_status.status in MYSQL_RESPONSIVE_STATUSES
@@ -286,6 +296,10 @@ class SimpleInstance(object):
         if self.db_info.task_status.is_error:
             return InstanceStatus.ERROR
 
+        # If we've reset the status, show it as an error
+        if tr_instance.ServiceStatuses.UNKNOWN == self.datastore_status.status:
+            return InstanceStatus.ERROR
+
         # Check for taskmanager status.
         action = self.db_info.task_status.action
         if 'BUILDING' == action:
@@ -296,6 +310,8 @@ class SimpleInstance(object):
             return InstanceStatus.REBOOT
         if 'RESIZING' == action:
             return InstanceStatus.RESIZE
+        if 'UPGRADING' == action:
+            return InstanceStatus.UPGRADE
         if 'RESTART_REQUIRED' == action:
             return InstanceStatus.RESTART_REQUIRED
         if InstanceTasks.PROMOTING.action == action:
@@ -589,8 +605,9 @@ class BaseInstance(SimpleInstance):
     def delete(self):
         def _delete_resources():
             if self.is_building:
-                raise exception.UnprocessableEntity("Instance %s is not ready."
-                                                    % self.id)
+                raise exception.UnprocessableEntity(
+                    "Instance %s is not ready. (Status is %s)." %
+                    (self.id, self.status))
             LOG.debug("Deleting instance with compute id = %s.",
                       self.db_info.compute_instance_id)
 
@@ -684,6 +701,46 @@ class BaseInstance(SimpleInstance):
             self._server_group_loaded = True
         return self._server_group
 
+    def get_injected_files(self, datastore_manager):
+        injected_config_location = CONF.get('injected_config_location')
+        guest_info = CONF.get('guest_info')
+
+        if ('/' in guest_info):
+            # Set guest_info_file to exactly guest_info from the conf file.
+            # This should be /etc/guest_info for pre-Kilo compatibility.
+            guest_info_file = guest_info
+        else:
+            guest_info_file = os.path.join(injected_config_location,
+                                           guest_info)
+
+        files = {guest_info_file: (
+            "[DEFAULT]\n"
+            "guest_id=%s\n"
+            "datastore_manager=%s\n"
+            "tenant_id=%s\n"
+            % (self.id, datastore_manager, self.tenant_id))}
+
+        if os.path.isfile(CONF.get('guest_config')):
+            with open(CONF.get('guest_config'), "r") as f:
+                files[os.path.join(injected_config_location,
+                                   "trove-guestagent.conf")] = f.read()
+
+        return files
+
+    def reset_status(self):
+        if self.is_building or self.is_error:
+            LOG.info(_LI("Resetting the status to ERROR on instance %s."),
+                     self.id)
+            self.reset_task_status()
+
+            reset_instance = InstanceServiceStatus.find_by(instance_id=self.id)
+            reset_instance.set_status(tr_instance.ServiceStatuses.UNKNOWN)
+            reset_instance.save()
+        else:
+            raise exception.UnprocessableEntity(
+                "Instance %s status can only be reset in BUILD or ERROR "
+                "state." % self.id)
+
 
 class FreshInstance(BaseInstance):
     @classmethod
@@ -693,8 +750,8 @@ class FreshInstance(BaseInstance):
 
 class BuiltInstance(BaseInstance):
     @classmethod
-    def load(cls, context, id):
-        return load_instance(cls, context, id, needs_server=True)
+    def load(cls, context, id, needs_server=True):
+        return load_instance(cls, context, id, needs_server=needs_server)
 
 
 class Instance(BuiltInstance):
@@ -1229,6 +1286,12 @@ class Instance(BuiltInstance):
         config = template.SingleInstanceConfigTemplate(
             self.datastore_version, flavor, self.id)
         return dict(config.render_dict())
+
+    def upgrade(self, datastore_version):
+        self.update_db(datastore_version_id=datastore_version.id,
+                       task_status=InstanceTasks.UPGRADING)
+        task_api.API(self.context).upgrade(self.id,
+                                           datastore_version.id)
 
 
 def create_server_list_matcher(server_list):

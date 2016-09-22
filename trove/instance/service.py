@@ -78,7 +78,6 @@ class InstanceController(wsgi.Controller):
         if not body:
             raise exception.BadRequest(_("Invalid request body."))
         context = req.environ[wsgi.CONTEXT_KEY]
-        instance = models.Instance.load(context, id)
         _actions = {
             'restart': self._action_restart,
             'resize': self._action_resize,
@@ -86,6 +85,7 @@ class InstanceController(wsgi.Controller):
             'promote_to_replica_source':
             self._action_promote_to_replica_source,
             'eject_replica_source': self._action_eject_replica_source,
+            'reset_status': self._action_reset_status,
         }
         selected_action = None
         action_name = None
@@ -97,6 +97,10 @@ class InstanceController(wsgi.Controller):
                      "instance %(instance_id)s for tenant '%(tenant_id)s'"),
                  {'action_name': action_name, 'instance_id': id,
                   'tenant_id': tenant_id})
+        needs_server = True
+        if action_name in ['reset_status']:
+            needs_server = False
+        instance = models.Instance.load(context, id, needs_server=needs_server)
         return selected_action(context, req, instance, body)
 
     def _action_restart(self, context, req, instance, body):
@@ -161,6 +165,17 @@ class InstanceController(wsgi.Controller):
                                                                  request=req)
         with StartNotification(context, instance_id=instance.id):
             instance.eject_replica_source()
+        return wsgi.Result(None, 202)
+
+    def _action_reset_status(self, context, req, instance, body):
+        context.notification = notification.DBaaSInstanceResetStatus(
+            context, request=req)
+        with StartNotification(context, instance_id=instance.id):
+            instance.reset_status()
+
+            LOG.debug("Failing backups for instance %s." % instance.id)
+            backup_model.fail_for_instance(instance.id)
+
         return wsgi.Result(None, 202)
 
     def index(self, req, tenant_id):
@@ -312,15 +327,6 @@ class InstanceController(wsgi.Controller):
                 return configuration_id
 
     def _modify_instance(self, context, req, instance, **kwargs):
-        """Modifies the instance using the specified keyword arguments
-        'detach_replica': ignored if not present or False, if True,
-        specifies the instance is a replica that will be detached from
-        its master
-        'configuration_id': Ignored if not present, if None, detaches an
-        an attached configuration group, if not None, attaches the
-        specified configuration group
-        """
-
         if 'detach_replica' in kwargs and kwargs['detach_replica']:
             LOG.debug("Detaching replica from source.")
             context.notification = notification.DBaaSInstanceDetach(
@@ -342,6 +348,14 @@ class InstanceController(wsgi.Controller):
                                                                   request=req))
                 with StartNotification(context, instance_id=instance.id):
                     instance.unassign_configuration()
+        if 'datastore_version' in kwargs:
+            datastore_version = datastore_models.DatastoreVersion.load(
+                instance.datastore, kwargs['datastore_version'])
+            context.notification = (
+                notification.DBaaSInstanceUpgrade(context, request=req))
+            with StartNotification(context, instance_id=instance.id,
+                                   datastore_version_id=datastore_version.id):
+                instance.upgrade(datastore_version)
         if kwargs:
             instance.update_db(**kwargs)
 
@@ -381,6 +395,10 @@ class InstanceController(wsgi.Controller):
             args['name'] = body['instance']['name']
         if 'configuration' in body['instance']:
             args['configuration_id'] = self._configuration_parse(context, body)
+        if 'datastore_version' in body['instance']:
+            args['datastore_version'] = body['instance'].get(
+                'datastore_version')
+
         self._modify_instance(context, req, instance, **args)
         return wsgi.Result(None, 202)
 

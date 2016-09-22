@@ -15,7 +15,9 @@
 
 from trove.common import utils
 from trove.tests.scenario.helpers.test_helper import DataType
+from trove.tests.scenario import runners
 from trove.tests.scenario.runners.test_runners import CheckInstance
+from trove.tests.scenario.runners.test_runners import SkipKnownBug
 from trove.tests.scenario.runners.test_runners import TestRunner
 from troveclient.compat import exceptions
 
@@ -67,7 +69,7 @@ class ReplicationRunner(TestRunner):
             datastore=self.instance_info.dbaas_datastore,
             datastore_version=self.instance_info.dbaas_datastore_version,
             locality='anti-affinity').id
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
     def run_create_single_replica(self, expected_http_code=200):
         self.master_backup_count = len(
@@ -85,7 +87,7 @@ class ReplicationRunner(TestRunner):
             datastore_version=self.instance_info.dbaas_datastore_version,
             nics=self.instance_info.nics,
             replica_count=replica_count)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         return replica.id
 
     def run_wait_for_single_replica(self, expected_states=['BUILD', 'ACTIVE']):
@@ -96,8 +98,8 @@ class ReplicationRunner(TestRunner):
         self.replica_1_host = self.get_instance_host(self.replica_1_id)
 
     def _assert_is_master(self, instance_id, replica_ids):
-        instance = self.get_instance(instance_id)
-        self.assert_client_code(200)
+        instance = self.get_instance(instance_id, client=self.admin_client)
+        self.assert_client_code(200, client=self.admin_client)
         CheckInstance(instance._info).slaves()
         self.assert_true(
             set(replica_ids).issubset(self._get_replica_set(instance_id)))
@@ -108,8 +110,8 @@ class ReplicationRunner(TestRunner):
         return set([replica['id'] for replica in instance._info['replicas']])
 
     def _assert_is_replica(self, instance_id, master_id):
-        instance = self.get_instance(instance_id)
-        self.assert_client_code(200)
+        instance = self.get_instance(instance_id, client=self.admin_client)
+        self.assert_client_code(200, client=self.admin_client)
         CheckInstance(instance._info).replica_of()
         self.assert_equal(master_id, instance._info['replica_of']['id'],
                           'Unexpected replication master ID')
@@ -143,7 +145,7 @@ class ReplicationRunner(TestRunner):
             datastore_version=self.instance_info.dbaas_datastore_version,
             replica_of=self.non_affinity_master_id,
             replica_count=1).id
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
     def run_create_multiple_replicas(self, expected_http_code=200):
         self.replica_2_id = self.assert_replica_create(
@@ -174,7 +176,8 @@ class ReplicationRunner(TestRunner):
                         else [instance_ids])
         for instance_id in instance_ids:
             self.auth_client.instances.delete(instance_id)
-            self.assert_client_code(expected_http_code)
+            self.assert_client_code(expected_http_code,
+                                    client=self.auth_client)
 
     def run_wait_for_delete_non_affinity_repl(
             self, expected_last_status=['SHUTDOWN']):
@@ -230,10 +233,12 @@ class ReplicationRunner(TestRunner):
 
     def run_eject_valid_master(self, expected_exception=exceptions.BadRequest,
                                expected_http_code=400):
-        self.assert_raises(
-            expected_exception, expected_http_code,
-            self.auth_client.instances.eject_replica_source,
-            self.instance_info.id)
+        # self.assert_raises(
+        #     expected_exception, expected_http_code,
+        #     self.auth_client.instances.eject_replica_source,
+        #     self.instance_info.id)
+        # Uncomment once BUG_EJECT_VALID_MASTER is fixed
+        raise SkipKnownBug(runners.BUG_EJECT_VALID_MASTER)
 
     def run_delete_valid_master(self, expected_exception=exceptions.Forbidden,
                                 expected_http_code=403):
@@ -340,8 +345,8 @@ class ReplicationRunner(TestRunner):
             replica_id, expected_states, expected_http_code)
 
     def _assert_is_not_replica(self, instance_id):
-        instance = self.get_instance(instance_id)
-        self.assert_client_code(200)
+        instance = self.get_instance(instance_id, client=self.admin_client)
+        self.assert_client_code(200, client=self.admin_client)
 
         if 'replica_of' not in instance._info:
             try:

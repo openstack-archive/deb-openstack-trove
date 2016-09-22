@@ -21,9 +21,11 @@ from trove.cluster.tasks import ClusterTasks
 from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
-from trove.common.notification import DBaaSClusterGrow, DBaaSClusterShrink
+from trove.common.notification import (DBaaSClusterGrow, DBaaSClusterShrink,
+                                       DBaaSClusterResetStatus)
 from trove.common.notification import StartNotification
 from trove.common import remote
+from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import strategy
 from trove.common import utils
 from trove.datastore import models as datastore_models
@@ -89,6 +91,9 @@ class Cluster(object):
             self.ds = (datastore_models.Datastore.
                        load(self.ds_version.datastore_id))
         self._db_instances = None
+        self._server_group = None
+        self._server_group_loaded = False
+        self._locality = None
 
     @classmethod
     def get_guest(cls, instance):
@@ -131,6 +136,16 @@ class Cluster(object):
     def reset_task(self):
         LOG.info(_("Setting task to NONE on cluster %s") % self.id)
         self.update_db(task_status=ClusterTasks.NONE)
+
+    def reset_status(self):
+        self.validate_cluster_available([ClusterTasks.BUILDING_INITIAL])
+        LOG.info(_("Resetting status to NONE on cluster %s") % self.id)
+        self.reset_task()
+        instances = inst_models.DBInstance.find_all(cluster_id=self.id,
+                                                    deleted=False).all()
+        for inst in instances:
+            instance = inst_models.load_any_instance(self.context, inst.id)
+            instance.reset_status()
 
     @property
     def id(self):
@@ -198,13 +213,45 @@ class Cluster(object):
         return inst_models.Instances.load_all_by_cluster_id(
             self.context, self.db_info.id, load_servers=False)
 
+    @property
+    def server_group(self):
+        # The server group could be empty, so we need a flag to cache it
+        if not self._server_group_loaded and self.instances:
+            self._server_group = None
+            # Not all the instances may have the server group loaded, so
+            # check them all
+            for instance in self.instances:
+                if instance.server_group:
+                    self._server_group = instance.server_group
+                    break
+            self._server_group_loaded = True
+        return self._server_group
+
+    @property
+    def locality(self):
+        if not self._locality:
+            if self.server_group:
+                self._locality = srv_grp.ServerGroup.get_locality(
+                    self._server_group)
+        return self._locality
+
+    @locality.setter
+    def locality(self, value):
+        """This is to facilitate the fact that the server group may not be
+        set up before the create command returns.
+        """
+        self._locality = value
+
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties):
+               instances, extended_properties, locality):
+        locality = srv_grp.ServerGroup.build_scheduler_hint(
+            context, locality, name)
         api_strategy = strategy.load_api_strategy(datastore_version.manager)
         return api_strategy.cluster_class.create(context, name, datastore,
                                                  datastore_version, instances,
-                                                 extended_properties)
+                                                 extended_properties,
+                                                 locality)
 
     def validate_cluster_available(self, valid_states=[ClusterTasks.NONE]):
         if self.db_info.task_status not in valid_states:
@@ -224,6 +271,11 @@ class Cluster(object):
 
         self.update_db(task_status=ClusterTasks.DELETING)
 
+        # we force the server-group delete here since we need to load the
+        # group while the instances still exist. Also, since the instances
+        # take a while to be removed they might not all be gone even if we
+        # do it after the delete.
+        srv_grp.ServerGroup.delete(self.context, self.server_group, force=True)
         for db_inst in db_insts:
             instance = inst_models.load_any_instance(self.context, db_inst.id)
             instance.delete()
@@ -243,6 +295,8 @@ class Cluster(object):
                         instance['name'] = node['name']
                     if 'volume' in node:
                         instance['volume_size'] = int(node['volume']['size'])
+                    if 'modules' in node:
+                        instance['modules'] = node['modules']
                     instances.append(instance)
                 return self.grow(instances)
         elif action == 'shrink':
@@ -250,6 +304,12 @@ class Cluster(object):
             with StartNotification(context, cluster_id=self.id):
                 instance_ids = [instance['id'] for instance in param]
                 return self.shrink(instance_ids)
+        elif action == "reset-status":
+            context.notification = DBaaSClusterResetStatus(context,
+                                                           request=req)
+            with StartNotification(context, cluster_id=self.id):
+                return self.reset_status()
+
         else:
             raise exception.BadRequest(_("Action %s not supported") % action)
 
@@ -261,7 +321,7 @@ class Cluster(object):
 
     @staticmethod
     def load_instance(context, cluster_id, instance_id):
-        return inst_models.load_instance_with_guest(
+        return inst_models.load_instance_with_info(
             inst_models.DetailInstance, context, instance_id, cluster_id)
 
     @staticmethod

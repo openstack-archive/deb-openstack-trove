@@ -255,7 +255,8 @@ cluster = {
                                 "modules": module_list,
                             }
                         }
-                    }
+                    },
+                    "locality": non_empty_string
                 }
             }
         }
@@ -287,6 +288,7 @@ cluster = {
                         "volume": volume,
                         "nics": nics,
                         "availability_zone": non_empty_string,
+                        "modules": module_list,
                         "related_to": non_empty_string,
                         "type": non_empty_string
                     }
@@ -369,6 +371,7 @@ instance = {
                     "replica_of": {},
                     "name": non_empty_string,
                     "configuration": configuration_id,
+                    "datastore_version": non_empty_string,
                 }
             }
         }
@@ -523,7 +526,8 @@ backup = {
                     "description": non_empty_string,
                     "instance": uuid,
                     "name": non_empty_string,
-                    "parent_id": uuid
+                    "parent_id": uuid,
+                    "incremental": boolean_string
                 }
             }
         }
@@ -606,6 +610,8 @@ module = {
                     },
                     "auto_apply": boolean_string,
                     "all_tenants": boolean_string,
+                    "all_datastores": boolean_string,
+                    "all_datastore_versions": boolean_string,
                     "visible": boolean_string,
                     "live_update": boolean_string,
                 }

@@ -17,6 +17,8 @@ from proboscis import SkipTest
 
 from trove.common import exception
 from trove.common.utils import poll_until
+from trove.tests.scenario import runners
+from trove.tests.scenario.runners.test_runners import SkipKnownBug
 from trove.tests.scenario.runners.test_runners import TestRunner
 from troveclient.compat import exceptions
 
@@ -51,8 +53,8 @@ class DatabaseActionsRunner(TestRunner):
     def assert_databases_create(self, instance_id, serial_databases_def,
                                 expected_http_code):
         self.auth_client.databases.create(instance_id, serial_databases_def)
-        self.assert_client_code(expected_http_code)
-        self._wait_for_database_create(instance_id, serial_databases_def)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
+        self.wait_for_database_create(instance_id, serial_databases_def)
         return serial_databases_def
 
     def run_databases_list(self, expected_http_code=200):
@@ -62,7 +64,7 @@ class DatabaseActionsRunner(TestRunner):
     def assert_databases_list(self, instance_id, expected_database_defs,
                               expected_http_code, limit=2):
         full_list = self.auth_client.databases.list(instance_id)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         listed_databases = {database.name: database for database in full_list}
         self.assert_is_none(full_list.next,
                             "Unexpected pagination in the list.")
@@ -84,7 +86,7 @@ class DatabaseActionsRunner(TestRunner):
 
         # Test list pagination.
         list_page = self.auth_client.databases.list(instance_id, limit=limit)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
         self.assert_true(len(list_page) <= limit)
         if len(full_list) > limit:
@@ -102,30 +104,10 @@ class DatabaseActionsRunner(TestRunner):
                               "in the page.")
             list_page = self.auth_client.databases.list(
                 instance_id, marker=marker)
-            self.assert_client_code(expected_http_code)
+            self.assert_client_code(expected_http_code,
+                                    client=self.auth_client)
             self.assert_pagination_match(
                 list_page, full_list, limit, len(full_list))
-
-    def _wait_for_database_create(self, instance_id, expected_database_defs):
-        expected_db_names = {db_def['name']
-                             for db_def in expected_database_defs}
-        self.report.log("Waiting for all created databases to appear in the "
-                        "listing: %s" % expected_db_names)
-
-        def _all_exist():
-            all_dbs = self._get_db_names(instance_id)
-            return all(db in all_dbs for db in expected_db_names)
-
-        try:
-            poll_until(_all_exist, time_out=self.GUEST_CAST_WAIT_TIMEOUT_SEC)
-            self.report.log("All databases now exist on the instance.")
-        except exception.PollTimeOut:
-            self.fail("Some databases were not created within the poll "
-                      "timeout: %ds" % self.GUEST_CAST_WAIT_TIMEOUT_SEC)
-
-    def _get_db_names(self, instance_id):
-        full_list = self.auth_client.databases.list(instance_id)
-        return {database.name: database for database in full_list}
 
     def run_database_create_with_no_attributes(
             self, expected_exception=exceptions.BadRequest,
@@ -182,7 +164,7 @@ class DatabaseActionsRunner(TestRunner):
             database_name,
             expected_http_code):
         self.auth_client.databases.delete(instance_id, database_name)
-        self.assert_client_code(expected_http_code)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         self._wait_for_database_delete(instance_id, database_name)
 
     def _wait_for_database_delete(self, instance_id, deleted_database_name):
@@ -190,7 +172,7 @@ class DatabaseActionsRunner(TestRunner):
                         "listing: %s" % deleted_database_name)
 
         def _db_is_gone():
-            all_dbs = self._get_db_names(instance_id)
+            all_dbs = self.get_db_names(instance_id)
             return deleted_database_name not in all_dbs
 
         try:
@@ -229,3 +211,12 @@ class DatabaseActionsRunner(TestRunner):
 
     def get_system_databases(self):
         return self.get_datastore_config_property('ignore_dbs')
+
+
+class PostgresqlDatabaseActionsRunner(DatabaseActionsRunner):
+
+    def run_system_database_create(self):
+        raise SkipKnownBug(runners.BUG_WRONG_API_VALIDATION)
+
+    def run_system_database_delete(self):
+        raise SkipKnownBug(runners.BUG_WRONG_API_VALIDATION)

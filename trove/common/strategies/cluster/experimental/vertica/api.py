@@ -20,6 +20,7 @@ from trove.cluster.views import ClusterView
 from trove.common import cfg
 from trove.common import exception
 from trove.common import remote
+from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import base
 from trove.common import utils
 from trove.extensions.mgmt.clusters.views import MgmtClusterView
@@ -70,7 +71,8 @@ class VerticaCluster(models.Cluster):
 
     @staticmethod
     def _create_instances(context, db_info, datastore, datastore_version,
-                          instances, new_cluster):
+                          instances, extended_properties, locality,
+                          new_cluster=True):
         vertica_conf = CONF.get(datastore_version.manager)
         num_instances = len(instances)
 
@@ -78,8 +80,8 @@ class VerticaCluster(models.Cluster):
         num_existing = len(existing)
 
         # Matching number of instances with configured cluster_member_count
-        if new_cluster \
-                and num_instances != vertica_conf.cluster_member_count:
+        if (new_cluster and
+                num_instances != vertica_conf.cluster_member_count):
             raise exception.ClusterNumInstancesNotSupported(
                 num_instances=vertica_conf.cluster_member_count)
 
@@ -131,22 +133,19 @@ class VerticaCluster(models.Cluster):
             instance_name = "%s-member-%s" % (db_info.name,
                                               str(i + num_existing + 1))
             minstances.append(
-                inst_models.Instance.create(context, instance_name,
-                                            flavor_id,
-                                            datastore_version.image_id,
-                                            [], [], datastore,
-                                            datastore_version,
-                                            volume_size, None,
-                                            nics=nics[i],
-                                            availability_zone=azs[i],
-                                            configuration_id=None,
-                                            cluster_config=member_config)
+                inst_models.Instance.create(
+                    context, instance_name, flavor_id,
+                    datastore_version.image_id, [], [], datastore,
+                    datastore_version, volume_size, None,
+                    nics=nics[i], availability_zone=azs[i],
+                    configuration_id=None, cluster_config=member_config,
+                    locality=locality, modules=instances[i].get('modules'))
             )
         return minstances
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties):
+               instances, extended_properties, locality):
         LOG.debug("Initiating cluster creation.")
 
         vertica_conf = CONF.get(datastore_version.manager)
@@ -163,7 +162,8 @@ class VerticaCluster(models.Cluster):
             task_status=ClusterTasks.BUILDING_INITIAL)
 
         cls._create_instances(context, db_info, datastore, datastore_version,
-                              instances, new_cluster=True)
+                              instances, extended_properties, locality,
+                              new_cluster=True)
         # Calling taskmanager to further proceed for cluster-configuration
         task_api.load(context, datastore_version.manager).create_cluster(
             db_info.id)
@@ -196,8 +196,10 @@ class VerticaCluster(models.Cluster):
 
         db_info.update(task_status=ClusterTasks.GROWING_CLUSTER)
 
+        locality = srv_grp.ServerGroup.convert_to_hint(self.server_group)
         new_instances = self._create_instances(context, db_info, datastore,
                                                datastore_version, instances,
+                                               None, locality,
                                                new_cluster=False)
 
         task_api.load(context, datastore_version.manager).grow_cluster(

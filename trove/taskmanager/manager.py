@@ -30,6 +30,7 @@ from trove.common import remote
 import trove.common.rpc.version as rpc_version
 from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import strategy
+from trove.datastore.models import DatastoreVersion
 import trove.extensions.mgmt.instances.models as mgmtmodels
 from trove.instance.tasks import InstanceTasks
 from trove.taskmanager import models
@@ -92,6 +93,11 @@ class Manager(periodic_task.PeriodicTasks):
             instance.db_info.save()
 
     def promote_to_replica_source(self, context, instance_id):
+        # TODO(atomic77) Promote and eject need to be able to handle the case
+        # where a datastore like Postgresql needs to treat the slave to be
+        # promoted differently from the old master and the slaves which will
+        # be simply reassigned to a new master. See:
+        # https://bugs.launchpad.net/trove/+bug/1553339
 
         def _promote_to_replica_source(old_master, master_candidate,
                                        replica_models):
@@ -114,41 +120,43 @@ class Manager(periodic_task.PeriodicTasks):
             # and possibly some number of "orphaned" slaves
 
             exception_replicas = []
+            error_messages = ""
             for replica in replica_models:
                 try:
                     if replica.id != master_candidate.id:
                         replica.detach_replica(old_master, for_failover=True)
                         replica.attach_replica(master_candidate)
-                except exception.TroveError:
-                    msg = _("promote-to-replica-source: Unable to migrate "
-                            "replica %(slave)s from old replica source "
-                            "%(old_master)s to new source %(new_master)s.")
-                    msg_values = {
-                        "slave": replica.id,
-                        "old_master": old_master.id,
-                        "new_master": master_candidate.id
-                    }
-                    LOG.exception(msg % msg_values)
+                except exception.TroveError as ex:
+                    msg = (_("Unable to migrate replica %(slave)s from "
+                             "old replica source %(old_master)s to "
+                             "new source %(new_master)s on promote.") %
+                           {"slave": replica.id,
+                            "old_master": old_master.id,
+                            "new_master": master_candidate.id})
+                    LOG.exception(msg)
                     exception_replicas.append(replica)
+                    error_messages += "%s (%s)\n" % (msg, ex)
 
             try:
                 old_master.demote_replication_master()
-            except Exception:
-                LOG.exception(_("Exception demoting old replica source"))
+            except Exception as ex:
+                msg = (_("Exception demoting old replica source %s.") %
+                       old_master.id)
+                LOG.exception(msg)
                 exception_replicas.append(old_master)
+                error_messages += "%s (%s)\n" % (msg, ex)
 
             self._set_task_status([old_master] + replica_models,
                                   InstanceTasks.NONE)
             if exception_replicas:
                 self._set_task_status(exception_replicas,
                                       InstanceTasks.PROMOTION_ERROR)
-                msg = _("promote-to-replica-source %(id)s: The following "
-                        "replicas may not have been switched: %(replicas)s")
-                msg_values = {
-                    "id": master_candidate.id,
-                    "replicas": exception_replicas
-                }
-                raise ReplicationSlaveAttachError(msg % msg_values)
+                msg = (_("promote-to-replica-source %(id)s: The following "
+                         "replicas may not have been switched: %(replicas)s") %
+                       {"id": master_candidate.id,
+                        "replicas": [repl.id for repl in exception_replicas]})
+                raise ReplicationSlaveAttachError("%s:\n%s" %
+                                                  (msg, error_messages))
 
         with EndNotification(context):
             master_candidate = BuiltInstanceTasks.load(context, instance_id)
@@ -201,35 +209,34 @@ class Manager(periodic_task.PeriodicTasks):
             old_master.attach_public_ips(slave_ips)
 
             exception_replicas = []
+            error_messages = ""
             for replica in replica_models:
                 try:
                     if replica.id != master_candidate.id:
                         replica.detach_replica(old_master, for_failover=True)
                         replica.attach_replica(master_candidate)
-                except exception.TroveError:
-                    msg = _("eject-replica-source: Unable to migrate "
-                            "replica %(slave)s from old replica source "
-                            "%(old_master)s to new source %(new_master)s.")
-                    msg_values = {
-                        "slave": replica.id,
-                        "old_master": old_master.id,
-                        "new_master": master_candidate.id
-                    }
-                    LOG.exception(msg % msg_values)
-                    exception_replicas.append(replica.id)
+                except exception.TroveError as ex:
+                    msg = (_("Unable to migrate replica %(slave)s from "
+                             "old replica source %(old_master)s to "
+                             "new source %(new_master)s on eject.") %
+                           {"slave": replica.id,
+                            "old_master": old_master.id,
+                            "new_master": master_candidate.id})
+                    LOG.exception(msg)
+                    exception_replicas.append(replica)
+                    error_messages += "%s (%s)\n" % (msg, ex)
 
             self._set_task_status([old_master] + replica_models,
                                   InstanceTasks.NONE)
             if exception_replicas:
                 self._set_task_status(exception_replicas,
                                       InstanceTasks.EJECTION_ERROR)
-                msg = _("eject-replica-source %(id)s: The following "
-                        "replicas may not have been switched: %(replicas)s")
-                msg_values = {
-                    "id": master_candidate.id,
-                    "replicas": exception_replicas
-                }
-                raise ReplicationSlaveAttachError(msg % msg_values)
+                msg = (_("eject-replica-source %(id)s: The following "
+                         "replicas may not have been switched: %(replicas)s") %
+                       {"id": master_candidate.id,
+                        "replicas": [repl.id for repl in exception_replicas]})
+                raise ReplicationSlaveAttachError("%s:\n%s" %
+                                                  (msg, error_messages))
 
         with EndNotification(context):
             master = BuiltInstanceTasks.load(context, instance_id)
@@ -377,6 +384,12 @@ class Manager(periodic_task.PeriodicTasks):
                                   root_password, nics, overrides, slave_of_id,
                                   cluster_config, volume_type, modules,
                                   locality)
+
+    def upgrade(self, context, instance_id, datastore_version_id):
+        instance_tasks = models.BuiltInstanceTasks.load(context, instance_id)
+        datastore_version = DatastoreVersion.load_by_uuid(datastore_version_id)
+        with EndNotification(context):
+            instance_tasks.upgrade(datastore_version)
 
     def update_overrides(self, context, instance_id, overrides):
         instance_tasks = models.BuiltInstanceTasks.load(context, instance_id)

@@ -17,6 +17,7 @@ from novaclient import exceptions as nova_exceptions
 from oslo_log import log as logging
 
 from trove.common.exception import PollTimeOut
+from trove.common.i18n import _
 from trove.common import instance as rd_instance
 from trove.tests.fakes.common import authorize
 
@@ -68,7 +69,6 @@ class FakeFlavors(object):
         self._add(11, 0, "eph.rd-tiny", 512, 1)
         self._add(12, 20, "eph.rd-smaller", 768, 2)
         self._add("custom", 25, "custom.small", 512, 1)
-        # self._add(13, 20, "m1.heat", 512)
 
     def _add(self, *args, **kwargs):
         new_flavor = FakeFlavor(*args, **kwargs)
