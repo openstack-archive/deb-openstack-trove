@@ -1,0 +1,10 @@
+Code-Review+2: Peter Stachowski <peter@tesora.com>
+Code-Review+1: jian.song <jian.song@easystack.cn>
+Code-Review+2: amrith <amrith@tesora.com>
+Workflow+1: amrith <amrith@tesora.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 23 Sep 2016 09:39:15 +0000
+Reviewed-on: https://review.openstack.org/373259
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
