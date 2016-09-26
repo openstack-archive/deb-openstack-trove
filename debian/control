@@ -84,8 +84,8 @@ Build-Depends-Indep: iproute2,
                      subunit,
                      testrepository,
 Standards-Version: 3.9.8
-Vcs-Browser: https://git.openstack.org/cgit/openstack/deb-openstack-trove
-Vcs-Git: https://git.openstack.org/openstack/deb-openstack-trove
+Vcs-Browser: https://git.openstack.org/cgit/openstack/deb-openstack-trove?h=debian%2Fnewton
+Vcs-Git: https://git.openstack.org/openstack/deb-openstack-trove -b debian/newton
 Homepage: https://github.com/openstack/trove
 
 Package: python-trove
