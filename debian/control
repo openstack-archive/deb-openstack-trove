@@ -3,7 +3,7 @@ Section: net
 Priority: extra
 Maintainer: PKG OpenStack <openstack-devel@lists.alioth.debian.org>
 Uploaders: Thomas Goirand <zigo@debian.org>,
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 10),
                dh-python,
                dh-systemd,
                openstack-pkg-tools (>= 40~),
@@ -179,6 +179,7 @@ Description: Database as a Service for OpenStack - common files
 Package: trove-api
 Architecture: all
 Depends: adduser,
+         lsb-base,
          trove-common (= ${binary:Version}),
          python-openstackclient,
          q-text-as-data,
@@ -204,6 +205,7 @@ Description: Database as a Service for OpenStack - API server
 Package: trove-guestagent
 Architecture: all
 Depends: adduser,
+         lsb-base,
          trove-common (= ${binary:Version}),
          ${misc:Depends},
          ${python:Depends},
@@ -228,6 +230,7 @@ Description: Database as a Service for OpenStack - guest agent
 Package: trove-taskmanager
 Architecture: all
 Depends: adduser,
+         lsb-base,
          trove-common (= ${binary:Version}),
          ${misc:Depends},
          ${python:Depends},
@@ -251,6 +254,7 @@ Description: Database as a Service for OpenStack - taskmanager
 Package: trove-conductor
 Architecture: all
 Depends: adduser,
+         lsb-base,
          trove-common (= ${binary:Version}),
          ${misc:Depends},
          ${python:Depends},
