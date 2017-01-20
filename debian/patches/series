@@ -7,3 +7,4 @@ fix-default-sql_connection-directive.patch
 make-trove-taskmanager.conf-parseable.patch
 blacklist-failing-tests.patch
 use-realpath-function-to-find-my.cnf-in-debian.patch
+allow_newer_sqlalchemy.patch

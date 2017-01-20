@@ -3,11 +3,9 @@ Author: Thomas Goirand <zigo@debian.org>
 Forwarded: no
 Last-Update: 2016-03-31
 
-Index: openstack-trove/etc/trove/trove.conf.sample
-===================================================================
---- openstack-trove.orig/etc/trove/trove.conf.sample
-+++ openstack-trove/etc/trove/trove.conf.sample
-@@ -309,4 +309,12 @@ api_strategy = trove.common.strategies.c
+--- a/etc/trove/trove.conf.sample
++++ b/etc/trove/trove.conf.sample
+@@ -309,4 +309,12 @@
  
  # Indicate which header field names may be used during the actual request.
  # (list value)

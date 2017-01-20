@@ -1,9 +1,11 @@
-openstack-trove (1:6.0.0-2) UNRELEASED; urgency=medium
+openstack-trove (1:6.0.0-2) unstable; urgency=medium
 
+  * Team upload.
   * Bumped debhelper compat version to 10
   * Added lsb-base to depends
+  * Patch-out upper constraints of SQLAlchemy
 
- -- Ondřej Nový <onovy@debian.org>  Thu, 24 Nov 2016 00:02:42 +0100
+ -- Ondřej Nový <onovy@debian.org>  Fri, 20 Jan 2017 11:53:30 +0100
 
 openstack-trove (1:6.0.0-1) unstable; urgency=medium
 

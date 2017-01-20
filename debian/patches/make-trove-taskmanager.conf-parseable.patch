@@ -3,9 +3,9 @@ Author: Thomas Goirand <zigo@debian.org>
 Forwarded: no
 Last-Update: 2016-07-16
 
---- openstack-trove-6.0.0~b2.orig/etc/trove/trove-taskmanager.conf.sample
-+++ openstack-trove-6.0.0~b2/etc/trove/trove-taskmanager.conf.sample
-@@ -164,7 +164,6 @@ pydev_debug = disabled
+--- a/etc/trove/trove-taskmanager.conf.sample
++++ b/etc/trove/trove-taskmanager.conf.sample
+@@ -164,7 +164,6 @@
  # registry server. Any valid SQLAlchemy connection string is fine.
  # See: http://www.sqlalchemy.org/docs/05/reference/sqlalchemy/connections.html#sqlalchemy.create_engine
  connection = mysql+pymysql://root:e1a2c042c828d3566d0a@localhost/trove

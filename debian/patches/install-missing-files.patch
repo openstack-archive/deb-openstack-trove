@@ -4,9 +4,9 @@ Author: Thomas Goirand <zigo@debian.org>
 Forwarded: no
 Last-Update: 2016-03-31
 
---- openstack-trove-5.0.0~rc1.orig/MANIFEST.in
-+++ openstack-trove-5.0.0~rc1/MANIFEST.in
-@@ -9,4 +9,7 @@ include etc/trove/*.*
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -9,4 +9,7 @@
  exclude .gitignore
  exclude .gitreview
  
