@@ -1,0 +1,9 @@
+Code-Review+2: amrith <amrith.kumar@gmail.com>
+Workflow+1: amrith <amrith.kumar@gmail.com>
+Code-Review+1: Petr Malik <pmalik@tesora.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 20 Jan 2017 01:09:47 +0000
+Reviewed-on: https://review.openstack.org/403856
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
