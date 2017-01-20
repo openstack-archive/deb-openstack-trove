@@ -1,9 +1,15 @@
 openstack-trove (1:6.0.0-2) unstable; urgency=medium
 
   * Team upload.
+
+  [ Ondřej Nový ]
   * Bumped debhelper compat version to 10
   * Added lsb-base to depends
   * Patch-out upper constraints of SQLAlchemy
+
+  [ Thomas Goirand ]
+  * Added Brazilian Portuguese debconf templates translation (Closes: #850971).
+  * Updated German debconf translation (Closes: #842483).
 
  -- Ondřej Nový <onovy@debian.org>  Fri, 20 Jan 2017 11:53:30 +0100
 
