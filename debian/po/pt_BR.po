@@ -1,18 +1,18 @@
-# German debconf translation of openstack-trove.
-# This file is distributed under the same license 
-#      as the openstack-trove package.
-# Copyright (C) 2010-2013, Thomas Goirand.
-# Copyright (C) of this file 2014-2016 Chris Leick <c.leick@vollbio.de>.
+# Debconf translations for openstack-trove.
+# Copyright (C) 2016 THE openstack-trove'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the openstack-trove package.
+# Adriano Rafael Gomes <adrianorg@debian.org>, 2016-2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openstack-trove 6.0.0-1\n"
+"Project-Id-Version: openstack-trove\n"
 "Report-Msgid-Bugs-To: openstack-trove@packages.debian.org\n"
 "POT-Creation-Date: 2016-03-31 10:25+0200\n"
-"PO-Revision-Date: 2016-10-27 18:41+0100\n"
-"Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
-"Language-Team: German <debian-l10n-german@lists.debian.org>\n"
-"Language: de\n"
+"PO-Revision-Date: 2017-01-11 15:38-0200\n"
+"Last-Translator: Adriano Rafael Gomes <adrianorg@debian.org>\n"
+"Language-Team: Brazilian Portuguese <debian-l10n-portuguese@lists.debian."
+"org>\n"
+"Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -21,7 +21,7 @@ msgstr ""
 #. Description
 #: ../trove-api.templates:2001
 msgid "Register Trove in the Keystone endpoint catalog?"
-msgstr "Trove im Keystone-Endpunktkatalog registrieren?"
+msgstr "Registrar o Trove no catálogo de \"endpoint\" do Keystone?"
 
 #. Type: boolean
 #. Description
@@ -31,9 +31,9 @@ msgid ""
 "accessible. This is done using \"keystone service-create\" and \"keystone "
 "endpoint-create\". This can be done automatically now."
 msgstr ""
-"Jeder OpenStack-Dienst (jedes API) sollte registriert werden, damit darauf "
-"zugegriffen werden kann. Dies wird mittels »keystone service-create« und "
-"»keystone endpoint-create« erreicht und kann nun automatisch erledigt werden."
+"Cada serviço OpenStack (cada API) deve ser registrado para ser acessível. "
+"Isso é feito usando \"keystone service-create\" e \"keystone endpoint-create"
+"\". Isso pode ser feito automaticamente agora."
 
 #. Type: boolean
 #. Description
@@ -43,16 +43,16 @@ msgid ""
 "to connect using a known admin project name, admin username and password. "
 "The admin auth token is not used anymore."
 msgstr ""
-"Beachten Sie, dass Sie einen konfigurierten und laufenden Keystone-Server "
-"haben müssen, mit dem Sie sich anhand eines bekannten "
-"Administratorprojektnamens, Administratorbenutzernamens und Passworts "
-"verbinden. Das Administratorauthentifizierungs-Token wird nicht mehr benutzt."
+"Note que você precisará ter um servidor Keystone configurado e em execução "
+"no qual conectar usando um nome de projeto de admin, nome de usuário de "
+"admin e senha conhecidos. O \"token\" de autenticação do admin não é mais "
+"usado."
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:3001
 msgid "Keystone server IP address:"
-msgstr "IP-Adresse des Keystone-Servers:"
+msgstr "Endereço IP do servidor Keystone:"
 
 #. Type: string
 #. Description
@@ -61,14 +61,15 @@ msgid ""
 "Please enter the IP address of the Keystone server, so that trove-api can "
 "contact Keystone to do the Trove service and endpoint creation."
 msgstr ""
-"Bitte geben Sie die IP-Adresse des Keystone-Servers an, so dass Trove-API "
-"Keystone kontaktieren kann, um den Trove-Dienst und den Endpunkt zu erstellen."
+"Por favor, informe o endereço IP do servidor Keystone, de forma que o trove-"
+"api possa contatar o Keystone para efetuar a criação do \"endpoint\" e do "
+"serviço Trove."
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:4001
 msgid "Keystone admin name:"
-msgstr "Keystone-Administratorname:"
+msgstr "Nome de admin do Keystone:"
 
 #. Type: string
 #. Description
@@ -82,35 +83,32 @@ msgid ""
 "To register the service endpoint, this package needs to know the Admin "
 "login, name, project name, and password to the Keystone server."
 msgstr ""
-"Um den Dienstendpunkt zu registrieren, muss dieses Paket den "
-"Administratoranmeldenamen, Namen, Projektnamen und das Passwort für den "
-"Keystone-Server kennen."
+"Para registrar o \"endpoint\" do serviço, esse pacote precisa saber o login, "
+"nome, nome do projeto e senha do Admin no servidor Keystone."
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:5001
 msgid "Keystone admin project name:"
-msgstr "Keystone-Administratorprojektname:"
+msgstr "Nome do projeto admin no Keystone:"
 
 #. Type: password
 #. Description
 #: ../trove-api.templates:6001
 msgid "Keystone admin password:"
-msgstr "Keystone-Administratorpasswort:"
+msgstr "Senha do admin no Keystone:"
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:7001
 msgid "Trove endpoint IP address:"
-msgstr "IP-Adresse des Trove-Endpunkts:"
+msgstr "Endereço IP do \"endpoint\" Trove:"
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:7001
 msgid "Please enter the IP address that will be used to contact Trove."
-msgstr ""
-"Bitte geben Sie die IP-Adresse ein, die zum Kontaktieren von Trove benutzt "
-"wird."
+msgstr "Por favor, informe o endereço IP que será usado para contatar o Trove."
 
 #. Type: string
 #. Description
@@ -120,15 +118,15 @@ msgid ""
 "service, so if you are installing a public cloud, this should be a public IP "
 "address."
 msgstr ""
-"Auf diese IP-Adresse sollte von den Clients, die diesen Dienst verwenden, "
-"zugegriffen werden können, daher sollte sie, falls Sie eine öffentliche "
-"Cloud installieren, eine öffentliche IP-Adresse sein."
+"Esse endereço IP deveria ser acessível a partir dos clientes que usarão esse "
+"serviço, assim se você está instalando uma nuvem pública, ele deveria ser um "
+"endereço IP público."
 
 #. Type: string
 #. Description
 #: ../trove-api.templates:8001
 msgid "Name of the region to register:"
-msgstr "Name der Region, die registriert wird:"
+msgstr "Nome da região para registrar:"
 
 #. Type: string
 #. Description
@@ -138,15 +136,15 @@ msgid ""
 "location. Please enter the zone that you wish to use when registering the "
 "endpoint."
 msgstr ""
-"OpenStack unterstützt die Verwendung von Verfügbarkeitszonen, bei der jede "
-"Region einen Ort repräsentiert. Bitte geben Sie die Zone, die Sie benutzen "
-"möchten, bei der Registrierung des Endpunkts an."
+"O OpenStack suporta usar zonas de disponibilidade, com cada região "
+"representando uma localidade. Por favor, informe a zona que você deseja usar "
+"ao registrar o \"endpoint\"."
 
 #. Type: boolean
 #. Description
 #: ../trove-common.templates:2001
 msgid "Set up a database for Trove?"
-msgstr "Eine Datenbank für Trove einrichten?"
+msgstr "Configurar um banco de dados para o Trove?"
 
 #. Type: boolean
 #. Description
@@ -155,9 +153,8 @@ msgid ""
 "No database has been set up for trove to use. Before continuing, you should "
 "make sure you have the following information:"
 msgstr ""
-"Es wurde keine Datenbank für die Benutzung mit Trove eingerichtet. Bevor Sie "
-"fortfahren, sollten Sie sicherstellen, dass Sie die folgenden Informationen "
-"haben:"
+"Nenhum banco de dados foi configurado para o trove utilizar. Antes de "
+"continuar, você deve se certificar que você tem as seguintes informações:"
 
 #. Type: boolean
 #. Description
@@ -169,11 +166,10 @@ msgid ""
 "   machine);\n"
 " * a username and password to access the database."
 msgstr ""
-" * den Datenbanktyp, den Sie verwenden möchten,\n"
-" * den Rechnernamen des Datenbankservers (dieser Server muss TCP-"
-"Verbindungen\n"
-"   von diesem Rechner erlauben),\n"
-" * einen Benutzernamen und ein Passwort, um auf die Datenbank zuzugreifen"
+" * o tipo de banco de dados que você quer usar;\n"
+" * o nome de máquina do servidor de banco de dados (tal servidor deve\n"
+"   permitir conexões TCP a partir deste computador);\n"
+" * um usuário e uma senha para acessar o banco de dados."
 
 #. Type: boolean
 #. Description
@@ -182,8 +178,8 @@ msgid ""
 "If some of these requirements are missing, do not choose this option and run "
 "with regular SQLite support."
 msgstr ""
-"Falls einige dieser Anforderungen nicht erfüllt sind, wählen Sie diese "
-"Option nicht und verwenden Sie stattdessen die reguläre Sqlite-Unterstützung."
+"Se algum desses requisitos estiver faltando, rejeite essa opção e execute "
+"com suporte regular ao SQLite."
 
 #. Type: boolean
 #. Description
@@ -192,14 +188,14 @@ msgid ""
 "You can change this setting later on by running \"dpkg-reconfigure -plow "
 "trove-common\"."
 msgstr ""
-"Sie können diese Einstellung später ändern, indem Sie »dpkg-reconfigure -"
-"plow trove-common« ausführen."
+"Você pode mudar essa configuração depois, executando \"dpkg-reconfigure -"
+"plow trove-common\"."
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:3001
 msgid "Authentication server hostname:"
-msgstr "Rechnername des Authentifizierungsservers:"
+msgstr "Nome de máquina do servidor de autenticação:"
 
 #. Type: string
 #. Description
@@ -209,9 +205,9 @@ msgid ""
 "Typically this is also the hostname of the OpenStack Identity Service "
 "(Keystone)."
 msgstr ""
-"Bitte geben Sie den Rechnernamen des Authentifizierungsservers für Trove an. "
-"Typischerweise ist das gleichzeitig der Rechnername Ihres OpenStack-"
-"Identitätsdienstes (Keystone)."
+"Por favor, especifique o nome de máquina do seu servidor de autenticação "
+"para o Trove. Tipicamente, esse é também o nome de máquina do Serviço de "
+"Identidade do OpenStack (Keystone)."
 
 #. Type: string
 #. Description
@@ -224,7 +220,7 @@ msgstr ""
 #. locataire ("tenant")
 #: ../trove-common.templates:4001
 msgid "Authentication server tenant name:"
-msgstr "Tenant-Name des Authentifizierungsservers:"
+msgstr "Nome de locatário (\"tenant\") do servidor de autenticação:"
 
 #. Type: string
 #. Description
@@ -237,37 +233,42 @@ msgstr "Tenant-Name des Authentifizierungsservers:"
 #. locataire ("tenant")
 #: ../trove-common.templates:4001
 msgid "Please specify the authentication server tenant name."
-msgstr "Bitte geben Sie den Tenant-Namen des Authentifizierungsservers an."
+msgstr ""
+"Por favor, especifique o nome de locatário (\"tenant\") do servidor de "
+"autenticação."
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:5001
 msgid "Authentication server username:"
-msgstr "Benutzername des Authentifizierungsservers:"
+msgstr "Nome de usuário do servidor de autenticação:"
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:5001
 msgid "Please specify the username to use with the authentication server."
-msgstr "Bitte geben Sie den Benutzernamen des Authentifizierungsservers an."
+msgstr ""
+"Por favor, especifique o nome de usuário para usar com o servidor de "
+"autenticação."
 
 #. Type: password
 #. Description
 #: ../trove-common.templates:6001
 msgid "Authentication server password:"
-msgstr "Passwort des Authentifizierungsservers:"
+msgstr "Senha do servidor de autenticação:"
 
 #. Type: password
 #. Description
 #: ../trove-common.templates:6001
 msgid "Please specify the password to use with the authentication server."
-msgstr "Bitte geben Sie das Passwort des Authentifizierungsservers an."
+msgstr ""
+"Por favor, especifique a senha para usar com o servidor de autenticação."
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:7001
 msgid "IP address of your RabbitMQ host:"
-msgstr "IP-Adresse Ihres RabbitMQ-Servers:"
+msgstr "Endereço IP da sua máquina RabbitMQ:"
 
 #. Type: string
 #. Description
@@ -281,39 +282,38 @@ msgid ""
 "In order to interoperate with other components of OpenStack, this package "
 "needs to connect to a central RabbitMQ server."
 msgstr ""
-"Um mit weiteren Bestandteilen von OpenStack zusammenzuarbeiten, muss sich "
-"dieses Paket mit einem zentralen RabbitMQ-Server verbinden."
+"Para interoperar com outros componentes do Openstack, esse pacote precisa se "
+"conectar a um servidor RabbitMQ central."
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:7001
 msgid "Please specify the IP address of that server."
-msgstr "Bitte geben Sie die IP-Adresse dieses Servers an."
+msgstr "Por favor, especifique o endereço IP de tal servidor."
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:8001
 msgid "Username for connection to the RabbitMQ server:"
-msgstr "Benutzername für die Verbindung mit dem RabbitMQ-Server:"
+msgstr "Nome de usuário para conexão ao servidor RabbitMQ:"
 
 #. Type: string
 #. Description
 #: ../trove-common.templates:8001
 msgid "Please specify the username used to connect to the RabbitMQ server."
 msgstr ""
-"Bitte geben Sie den Benutzernamen ein, den Sie zum Verbinden mit dem "
-"RabbitMQ-Server verwenden."
+"Por favor, especifique o nome de usuário usado para conectar ao servidor "
+"RabbitMQ."
 
 #. Type: password
 #. Description
 #: ../trove-common.templates:9001
 msgid "Password for connection to the RabbitMQ server:"
-msgstr "Passwort für die Verbindung mit dem RabbitMQ-Server:"
+msgstr "Senha para conexão com o servidor RabbitMQ:"
 
 #. Type: password
 #. Description
 #: ../trove-common.templates:9001
 msgid "Please specify the password used to connect to the RabbitMQ server."
 msgstr ""
-"Bitte geben Sie das Passwort ein, das Sie zum Verbinden mit dem "
-"RabbitMQ-Server verwenden."
+"Por favor, especifique a senha usada para conectar ao servidor RabbitMQ."
