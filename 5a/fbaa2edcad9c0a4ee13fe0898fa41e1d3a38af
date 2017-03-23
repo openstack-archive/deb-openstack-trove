@@ -1,0 +1,9 @@
+Code-Review+2: amrith <amrith.kumar@gmail.com>
+Workflow+1: amrith <amrith.kumar@gmail.com>
+Code-Review+1: Huangsm <huangsm@awcloud.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 14 Feb 2017 14:14:34 +0000
+Reviewed-on: https://review.openstack.org/429418
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/stable/ocata
