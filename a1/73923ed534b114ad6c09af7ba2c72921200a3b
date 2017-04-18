@@ -1,0 +1,9 @@
+Code-Review+1: gecong <ge.cong@zte.com.cn>
+Code-Review+2: Amrith Kumar <amrith.kumar@gmail.com>
+Workflow+1: Amrith Kumar <amrith.kumar@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 18 Apr 2017 09:38:03 +0000
+Reviewed-on: https://review.openstack.org/454204
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
