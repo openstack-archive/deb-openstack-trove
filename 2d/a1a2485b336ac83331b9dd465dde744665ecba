@@ -1,0 +1,9 @@
+Code-Review+1: Marcin Kosobucki <mkosobucki@blizzard.com>
+Code-Review+2: Amrith Kumar <amrith.kumar@gmail.com>
+Workflow+1: Amrith Kumar <amrith.kumar@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Sat, 20 May 2017 03:34:30 +0000
+Reviewed-on: https://review.openstack.org/455463
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/stable/ocata
