@@ -1,0 +1,9 @@
+Code-Review+2: Amrith Kumar <amrith.kumar@gmail.com>
+Workflow+1: Amrith Kumar <amrith.kumar@gmail.com>
+Code-Review+1: jian.song <jian.song@easystack.cn>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 16 Jun 2017 02:38:36 +0000
+Reviewed-on: https://review.openstack.org/474740
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
