@@ -1,0 +1,11 @@
+Code-Review+1: Alexandra Settle <a.settle@outlook.com>
+Code-Review+1: Trevor McCasland <TM2086@att.com>
+Code-Review+1: Erik Olof Gunnar Andersson <eandersson@blizzard.com>
+Code-Review+2: Amrith Kumar <amrith.kumar@gmail.com>
+Workflow+1: Amrith Kumar <amrith.kumar@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Sun, 16 Jul 2017 11:28:09 +0000
+Reviewed-on: https://review.openstack.org/479702
+Project: openstack/deb-openstack-trove
+Branch: refs/heads/master
