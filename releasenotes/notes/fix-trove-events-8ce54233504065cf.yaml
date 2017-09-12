@@ -1,3 +1,0 @@
----
-fixes:
-  - Generate trove events for the current period, and not a future period.

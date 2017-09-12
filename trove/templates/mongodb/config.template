@@ -1,4 +1,0 @@
-# mongodb.conf
-
-storage.mmapv1.smallFiles: false
-storage.journal.enabled: true

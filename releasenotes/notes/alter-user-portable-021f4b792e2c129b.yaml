@@ -1,4 +1,0 @@
----
-fixes:
-  - Use SET PASSWORD and RENAME USER queries
-    to update user properties.

@@ -1,4 +1,0 @@
----
-features:
-  - Support for standard WAL based streaming replication for
-    postgresql guests. Sets up read-only hot standby servers.

@@ -1,5 +1,0 @@
----
-features:
-  - Errors that occur in Trove are now persisted in
-    the database and are returned in the standard
-    'show' command.

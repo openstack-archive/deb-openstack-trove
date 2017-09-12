@@ -1,6 +1,0 @@
----
-features:
-    - Support was added for applying modules to
-      cluster instances through cluster-create
-      and cluster-grow. Bug 1578917
-

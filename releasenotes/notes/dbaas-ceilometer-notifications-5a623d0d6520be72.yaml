@@ -1,5 +1,0 @@
----
-features:
-  - Additional Ceilometer notifications have been provided by
-    Trove including create, end, error notifications for all
-    state-changing API calls.

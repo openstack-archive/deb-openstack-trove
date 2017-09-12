@@ -1,4 +1,0 @@
----
-features:
-  - Full and incremental backup and restore strategy for postgres
-    based on pg_basebackup and WAL shipping.

@@ -1,4 +1,0 @@
----
-fixes:
-  - Filter ignored users in the original query before
-    the result gets paginated (like in list_databases).
